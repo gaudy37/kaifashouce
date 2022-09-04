@@ -1,0 +1,2490 @@
+JDBC:
+
+//数据库记得改成需要连接的数据库名（springdb）
+重要    java连接mysql8的数据库：
+        Class.forName("com.mysql.cj.jdbc.Driver"); 
+        private String url = "jdbc:mysql://localhost:3306/springdb?useUnicode=true&characterEncoding=utf-8&serverTimezone=GMT%2B8&allowMultiQueries=true";
+        private String username = "root";
+        private String password = "123456";
+        private Connection conn;
+
+           java连接mysql5的数据库：
+        Class.forName("com.mysql.jdbc.Driver");
+        private String url = "jdbc:mysql://localhost:3306/springdb?characterEncoding=utf-8";
+        private String username = "root";
+        private String password = "123456";
+        conn = DriverManager.getConnection(url,username,password);
+
+           idea连接mysql数据库界面：
+	//数据库名springdb改为需要连接的数据库名
+	url：jdbc:mysql://localhost:3306/springdb?useUnicode=true&characterEncoding=utf-8&serverTimezone=GMT%2B8&allowMultiQueries=true
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+报错：对实体 "useSSL" 的引用必须以 ';' 分隔符结尾。
+	原因：mybatis.xml中mysql8的数据库url中有‘&’符，xml文件中有些特殊字符是被禁止的，而‘&’就是其中一个，
+	          如果要想使用它，需要用到它的转义字符"&amp;"
+	解决方法：将url中的所有&符全部修改为&amp;
+注：在property配置文件中不可使用&amp;
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    PrepareStatement和Statement的使用选择：
+	业务需要进行sql注入或者sql语句的拼接（如：select升序降序）时，选用Statement；单纯的传值，选用PrepareStatement。
+
+重要    JDBC单机事务的经典三行代码：
+	try{
+	//将自动提交机制修改为手动提交机制
+	conn.setAutoCommit(false);    //事务开始
+
+	中间为sql操作
+
+	//执行到此处，说明程序没有出错，手动提交事务
+	conn.commit();    //事务提交
+	} catch {
+		//程序出错，事务必须回滚，恢复初始数据
+		if (conn != null){
+			conn.rollback();    //事务回滚
+		}
+	}
+
+    乐观锁与悲观锁：
+    	悲观锁（select语句后增加 for update）:事务必须排队执行，数据加锁，不允许并发。
+		高并发，认为修改数据很频繁，不值得去进行无用的计算。
+    	乐观锁：支持并发，事务不需排队，数据有对应版本号，版本号不同会进行事务回滚
+		低并发，认为就算是并发情况下，也很少修改数据。
+重要    反射机制：
+	1、Class c = Class.forName("类名路径");  //类加载，执行静态代码块
+	     (类型强转)c.newInstance();
+
+重要    配置文件(.properties文件)：
+	ResourceBundle bundle = ResourceBundle.getBundle("配置文件路径");  //不含后缀
+	String 变量名 = bundle.getString("配置文件属性名");  //取得配置文件中对应属性名的值赋给String
+
+      java包结构：
+	entity层：实体类
+	dao层：数据库操作对象
+	controller层：控制层，servlet
+
+	经典sql注入攻击：xx ' or ' 1=1
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+详解String，StringBuild，StringBuffer的区别：
+	String：
+		被声明final类，成员变量也被final修饰
+		不可变
+		字符串常量池中缓存
+		（如何修改String对象？ --> 反射机制：	Field aa = String.class.getDeclaredField("value")  //获取 String类中的value字段
+						aa.setAccessible(true)  //修改value属性的访问权限
+						char[] val = (char[]) aa.get(String对象)   //获取string对象的value值
+						val[?] = ''   //对常量池中的string修改某个值 
+
+	StringBuffer和StringBuilder：
+		实现原理基于可修改的char数组，默认长度16
+		都继承于AbstractStringBuilder
+		StringBuffer线程安全，StringBuilder非线程安全
+
+	应用场景：
+		String：	字符串不常发生改变的业务场景
+			例：常量声明，少量字符串拼接操作等。
+
+		StringBuffer：在频繁进行字符串的运算（如拼接、替换、删除等），并且运行在多线程环境下
+			例：XML解析，HTTP参数解析与封装
+
+		StringBuilder：在频繁进行字符串的运算（如拼接、替换、删除等），并且运行在单线程环境下
+			例：SQL语句拼接，JSON封装等
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+HTML：
+
+    超链接(href)的target属性：
+	_blank：新窗口打开
+	_self：当前窗口
+	_parent：当前窗口的父窗口
+	_top：当前窗口的顶级窗口
+	<iframe src=""></iframe>：一个窗口中的内部窗口
+
+重要    B/S架构原理（粗略）：
+	第一步：用户在浏览器地址栏输入url
+	
+	第二步：回车（相当于通过浏览器向服务器发送了一个请求）
+		请求：request
+		Browser ---> Servlet
+
+重要	跳转页面：（浏览器向服务器发送请求的方式：
+		1(重点).手动在输入框输入网站url地址。
+		2(重点).单击页面的超链接跳转。
+		3(重点).form表单提交。<form action=""><input type="submit"></form>（可携带数据）
+			例：action="http://192.168.145.2:8080/crm/login"
+				http:http协议
+				192.168.145.2：访问服务器的IP地址
+				8080：服务器上的软件，8080端口对应一个服务
+				/crm/login：服务器上的某个资源名！（可能是一段处理登录的java程序）
+				表单数据提交格式url?name=value&name=value。。。。
+			注：action属性和href相同，所有提交表单的按钮必须是submit，输入框中有name属性的才能提交
+		4(了解).window.open(url,target)  //url:窗口要显示的网页路径；target:（HTML栏第一行查看）
+		5(重点).js代码：window.location,href = "url"  //window可改document，href可以省略
+			window.location
+			document.location.href
+			document.location
+		6.在WEB-INF/web.xml配置Servlet映射文件。为一个Servlet作映射，通过不同的方式来访问该Servlet。用map来指定Servlet位置。
+			例：<servlet>
+				<!--  用映射的Servlet的类名即可  -->
+				<servlet-name>HelloWorld</servlet-name>  
+				<!--  填写映射文件所在的包名，类名  -->
+				<servlet-class>com.bjpowernode.controller.HelloWorld</servlet-class>
+			      </servlet>
+			      <servlet-map>
+				<servlet-name>HelloWorld</servlet-name>
+				<!--  在浏览器地址栏中输入该信息即可访问此Servlet，填在form表单的action一样适用  -->
+				<url-pattern>/servlet/HelloWorldServlet</url-pattern>
+			      </servlet-map>
+）
+	
+	第三步：服务器给浏览器一个响应，最终响应一段HTML代码给浏览器，浏览器对HTML代码进行执行展示。
+		响应：response
+		Servlet ---> Browser	
+
+
+小注：详解Servlet的doGet与doPost方法的区别与使用
+      	<!--  如果没有指定method的属性，则默认该属性为"get"提交方式  -->
+	<form action="" method="get"></form>  
+get和post的区别：
+	1、通过get方式提交的数据有大小的限制，通常在1024字节左右。也就是说如果提交的数据很大，用get方法就可需要小心；
+	      	而post方式没有数据大小的限制，理论上传送多少数据都可以。
+
+	2、通过get传递数据，实际上是将传递的数据按照”key，value”的方式跟在URL的后面来达到传送的目的的；
+		而post传递数据是通过http请求的附件进行的，在URL中并没有明文显示。
+
+	3、通过Get方式提交的数据安全性不高，
+		而Post方式的更加安全
+
+小结：提交方式为get，就在doGet中写逻辑代码；提交方式为post，就在doPost中写逻辑代码
+	也可以post方式提交，然后在doGet中写逻辑代码，但是要在doPost中调用doGet方法，反之亦然。
+
+注结来源：https://www.cnblogs.com/nickup/p/9115479.html
+
+web项目的Servlet中找不到javax.servlet包处理办法：
+	1.添加服务器Tomcat：
+	        EditConfigurations（Run快捷键旁边的小框）  --> 左栏上方+号  --> 选择Tomcat Servlet --> configurl找到本地Tomcat所在路径
+	        --> Deployment发布应用 --> 右侧框+号 --> Aritifact --> apply --> ok
+	2.ProjectStructure（ctrl + alt + shfit + s） --> module  --> 选择缺少包的模块 --> Dependencies --> 右侧栏+号
+	        --> Library --> 选择Tomcat --> Add Selected --> Tomcat前打勾 --> apply --> ok
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+CSS：
+
+    HTML嵌入CSS样式的三种方式：
+	1.内联定义：标签内部属性style（style="属性:value; 属性:value; 。。。"
+	2.内部样式块对象：<style type="text/css">
+			选择器{      /* 标签选择器 例：div{}，id选择器 例：#id{}，类选择器 例：.class{}*/
+				样式名:样式值;
+				样式名:样式值;
+				。。。。
+				}
+		           </style>
+	✭3.链入外部CSS样式表文件：<link rel="stylesheet" type="text/css" href="css文件路径">
+	
+	CSS其他属性：
+		选择器:hover鼠标悬停效果
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+JavaScript(js)/脚本语言:
+
+     js的三大块：1.ECMAScript：JavaScript核心语法。
+	        2.DOM（Document Object Model）：操作网页元素
+	        3.BOM（Browser Object Model）操作浏览器对象本身
+
+重要    HTML嵌入js代码方式：
+	1.行间事件：<input type="button" onclick="window.alert('hello world!');">
+	2.脚本块：<script type="text/javascript">
+			<!-- 在此编写js代码，自上而下执行代码 -->
+			alert("hello world!");
+			alert("hello kitty!");
+		</script>
+	3.引入外部独立的js文件：<script type="text/javascript" src="js文件路径"></script>
+			注：引入js文件的标签中不可写js代码，写了也不会执行。
+
+    JavaScript函数声明：function 函数名(形参列表){函数体;}  或者  函数名 = function(形参列表){函数体;}
+	    变量声明：声明变量不加var时 ，这种变量必是全局变量，必须要进行手动赋值
+
+    typeof运算符：可以在js代码运行过程中，动态的获取变量的数据类型。
+	         语法格式： typeof  变量名   
+		结果："undefined","number","string","boolean","object","function"中6个字符串的一种
+
+	Math.ceil(x);  //x向上取整   
+	parseInt(x);  //x向下取整
+
+    Object对象通用属性和方法：
+        属性：
+	prototype 属性 | constructor 属性
+	Object.prototype.doSome = function(){}  //给Object对象扩展一个doSome方法
+	Object.prototype.username = "张三"  //给Object对象扩展一个username属性 
+        方法：
+	toLocaleString 方法 | toString 方法 | valueOf 方法
+
+    定义类：function 类名(形参){
+	          this.属性名 = 参数;
+	          this.方法名 = function(){}
+	}
+
+重要    获取节点（元素）的三种经典方式：
+	1.var mybtnElt = document.getElementById("id名");  //根据id获取对象，获取后对象有什么属性就可以"点"什么
+	   例如：mybtnElt.type = "checkbox";  //将mybtnElt按钮变为复选框
+	2.var aihaos = document.getElementsByName("aihao");  //根据name获取对象组，获取页面所有name为aihao的对象
+	3.var divs = document.getElementsByTagName("div")  //根据标签名字获取
+
+重要    js注册事件的两种方式：
+	1.回调函数：<script type="text/javascript">function sayHello(){}</script>
+	  	    <input type="button" onclick="sayHello()">  
+	
+	2.<input type="button" id="hellobtn" onclick="">
+	   <script type="text/javascript">
+	         function sum(){console.log("hehe")}  //定义的一个函数
+
+	         var hellobtnElt = document.ElementById("hellobtn");  //根据id获取button对象
+	         hellobtnElt.onclick = sum;  //js定义的方法名(后面不用加小括号)
+	         //hellobtnElt.onclick = function(){}  //回调函数是个匿名函数
+	   </script>
+	
+重要    js事件处理顺序引发报错问题解决方法：
+	<script>
+	      //window.onload在浏览器元素加载完毕时才会调用
+	      window.onload = function(){  
+		/*在此处写绑定事件*/	
+	      }
+	</script>
+
+重要    js如何捕捉键值：
+	<script>
+	      window.onload = function(){  
+		document.getElementById("username").onkeydown = function(y){  //onkeydown为键盘按下事件，y为传入的事件对象
+			if(y.keyCode == 13){  //注：回车键的键值为13，Esc键值为27
+				console.log("回车键被按下");
+			}
+		}	
+	      }
+	</script>
+	<input type="text" id="username" />
+
+    js的void运算符：语法格式：void(表达式)  //执行表达式，但是不返回任何结果
+	void()使用案例：
+		<a>要求：保留超链接样式，点击后执行一段js代码，执行js代码后保证页面不跳转！</a>
+
+	完成代码：
+		<!--
+		      1.添加href属性，保留超链接样式。
+		      2.onclick后编写js代码，点击后执行js代码
+		      3.void(0)运算符废弃href跳转路径，保证页面不跳转。javascript:表示后面是一段js代码，不写href会
+	                         认为后面是跳转地址。void括号中的表达式可以随便写。
+		-->
+		<a href="javascript:void(0)" onclick="alert('执行js代码了！')">要求：保留超链接样式，点击后执行一段js代码，执行js代码后保证页面不跳转！</a>
+
+    js数组遍历：
+	var arr = [true, "abc", 5, false, 3.14];  //js数组中可以放多种类型数据
+	for(var iowadoai in arr){  //iowadoai是数组下标
+		console.log(arr[iowadoai]);
+	}
+
+    for..in语句遍历对象属性：
+	function Employee(empno,ename){  //创建Employee类
+		this.empno = empno;
+		this.ename = ename;
+	}
+	var e = new Employee(7369,"SMITH");  //对象
+	for(var fdsafdsa in e){  //e是对象，fdsafdsa是对象属性名，属性名是字符串
+		//console.log(typeof fdsafdsa)  //string类型
+		console.log(e[fdsafdsa]);  //遍历
+	}
+      
+    with语句使用：
+	var e = new Employee(7369,"SMITH");  
+	//传入一个js对象
+	with(e){
+		console.log(empno + ", " + ename);  //(json对象.empno)前缀可以省略，直接调用js对象的属性
+	}
+
+    js获取"自1970年1月1日 00:00:00 000"到系统当前的毫秒数：
+	new Date().getTime();
+
+重要    js对象.innerHTML("<>");  //通过元素的innerHTML属性来设置内部的内容,括号内当做HTML代码执行
+    js对象.innerText("<>");  //innerText也可以设置元素当中的内容，但只当普通文本执行
+
+    js循环调用函数：v = window.setInterval("函数()",间隔调用时间);
+    js终止循环调用函数：window.clearInterval(v);  //将setInterval的返回值清除即可停止
+
+    js将当前窗口设置为顶级窗口：if(window.top != window.self){window.top.location = window.self.location;}
+
+    js历史记录：
+	前进：window.history.go(1)
+	后退：window.history.back()  //也可以go(-1)
+
+	eval()函数：window.eval("var i = 10")  //将一个字符串当做一段js代码执行
+重要    JSON(JavaScript Object Notation)：是一种轻量级的数据交换格式。体积小，解析方便
+	语法格式：
+	    var jsonObj = {
+			"属性名":属性值,
+			"属性名":属性值,
+			"属性名":属性值,
+			....
+		           }    //[]是数组对象，{}是json对象。json是一种无类型对象
+	访问对象的属性：
+		第一种方式：对象名.属性名
+		第二种方式：对象名["属性名"]
+           XML：重量级的数据交换格式。体积大，解析难度大
+
+重要    java传过来的字符串转变为json对象例（动态网页）：
+	/*双引号中模拟java后台传递给浏览器（前端）的json格式的普通字符串*/
+	var fromJavaJSON = "{\"name\":\"zhangsan\",\"age\":20}";
+	/*将json格式的字符串转换为json对象*/
+	window.eval("var people = " + fromJavaJSON);
+	//转换为json对象后可以调取数据（javascript和java之间两个不同的编程语言就完成了数据交换！）
+	console.log(people.name + "," + people.age)  //浏览器控制台输出zhangsan, 20 
+	//数据交换后进行展示
+	var html = ""  //拼接的HTML字符串
+	html += "<tr>"
+	.......
+	document.getElementById("id名").innerHTML = html  //将拼接的HTML代码在id名对象中解释并执行
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+正则表达式：
+      要求：第一：能看懂正则表达式
+	第二：简单的正则会写
+	第三：能够从网上搜索到想要的正则表达式
+	第四：会创建JS的正则表达式对象
+	第五：会调用JS正则表达式对象的方法
+
+      正则小手册：
+	常见的正则表达式符号：
+		. 匹配除换行符以外的任意字符
+		\w 匹配字母或数字或下划线或汉字
+		\s 匹配任意的空白符
+		\d 匹配数字
+		\b 匹配单词的开始或结束
+		^ 匹配字符串的开始
+		$ 匹配字符串的结束
+
+	反义：
+ 		\W 匹配任意不是字母，数字，下划线，汉字的字符
+		\S 匹配任意不是空白符的字符
+		\D 匹配任意非数字的字符
+		\B 匹配不是单词开头或结束的位置
+		[^x] 匹配除了x以外的任意字符
+		[^aeiou] 匹配除了aeiou这几个字母以外的任意字符
+
+	数量：
+		* 重复零次或更多次  0-N次
+		+ 重复一次或更多次  1-N次
+		? 重复零次或一次  0或1次
+		{n} 重复n次  n次
+		{n,} 重复n次或更多次  n+次
+		{n,m} 重复n到m次  n-m次
+
+		| 表示或者
+
+		注：数量永远匹配前面的字符出现的次数
+
+	常用的正则表达式大全：https://www.cnblogs.com/zxin/archive/2013/01/26/2877765.html
+
+    JS创建正则表达式对象：
+	直接量语法：var regExp = /正则表达式/标记    //正则表达式两段是斜杠，不是""; 
+	内置类RegExp类：var regExp = new RegExp("正则表达式","标记")
+
+	注：标记可选。
+		g：全局  global
+		i：忽略大小写  ignorecase
+		gi：全局扫描，忽略大小写
+
+    JS正则及常用方法函数总结：https://www.cnblogs.com/myzhibie/p/4365142.html
+
+    解决表单不合法提交问题：
+	<!-- button不能提交表单，但是可以通过js代码提交 -->
+	<input type="button" value="提交" id="regbtn" />
+	document.getElementById("regbtn").onclick = function(){
+		//使用JS代码触发事件，验证所有的表单项
+		usernameElt.focus();  //只有先获得焦点才能失去焦点，usernameElt为表单项用户名框id名
+		usernameElt.blur();  //调用usernameElt的回调函数onBlur验证用户名是否合法
+		//nameErrorSpan和pwdErrorSpan为输入框后的span标签id="nameErrorSpan"，判断是否合法，无内容即为合法填写
+		if(nameErrorSpan.innerHtml == "" && pwdErrorSpan == "")  //所有表单项合法
+			var formObj = document.getElementById("useForm");
+			//通过调用submit()完成表单提交
+			formObj.submit();
+	}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      临时指路碑石：
+	前端内容：ajax，jquery  ---  JavaScript，Dom，Html，css
+	动态代理：反射
+	mybatis：---JDBC的升级（创建Connection，执行sql的ResultSet，关闭资源）
+	spring： ---创建管理对象，之前是new对象
+	springmvc： ---servlet的升级，使用servlet接收请求，现在使用springmvc做servlet的事情。
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Web前端Ajax：
+    web前端大体运行方式：
+	前端页面（jsp，http）和后端servlet层进行交互，servlet层调用entity层（实体层）创建java对象和
+            dao层操作数据库进行数据的获取，servlet页面需要在web.xml中进行注册。异步对象在前端页面创建，自行
+            向servlet层发请求
+			
+
+
+
+	//Asynchronous：嗯森考奈斯
+    Ajax全称：Asynchronous JavaScript and XML（异步的JavaScript 和 XML）
+    Ajax实现局部刷新的概念：浏览器页面中有一个或多个异步对象，异步对象可以代替浏览器发请求和接收数据。
+
+    异步对象：就是XMLHttpRequest（Ajax的核心对象）
+	1.创建XMLHttpRequest对象语法：
+	var xmlhttp = new XMLHttpRequest();  //异步对象用js代码创建和使用，存在于浏览器内存中
+	
+	2.给异步对象绑定事件。onreadystatechange
+	例：xmlhttp.onreadystatechange = function(){
+		//处理请求的状态变化。
+		if(xmlHttp.readyState == 4 && xmlHttp.status == 200){
+		        //处理服务器端的数据，更新当前页面
+		        var data = xmlHttp.responseText;
+		        document.getElementById("name").value = data;
+		}	
+	       }
+
+	3.初始异步请求对象
+	异步的方法open()：xmlHttp.open(请求方式get | post，"服务器端的访问地址"，同步 | 异步请求（boolean, 默认为true，异步请求）)
+	例：xmlHttp.open("get", "loginServlet?name=zhangsan&pwd=123", true);
+
+	4.使用异步对象发送请求
+	xmlHttp.send();  //服务器端返回数据后去执行onreadystatechange，根据里面的判断处理数据
+
+	获取服务器端返回的数据，使用异步对象的属性：responseText
+	例：xmlHttp.responseText
+
+    异步对象的三个重要属性：
+	onreadystatechange属性：每当readyState属性改变，就会调用该函数
+	readyState属性：存有XMLHttpRequest状态
+		0：请求未初始化，创建异步请求对象       var xmlHttp = new XMLHttpRequest()
+		1：初始化异步请求对象       xmlHttp.open(请求方式，请求地址，true)
+		2：异步对象发送请求       xmlHttp.send()
+		3：异步对象从服务端获取了数据。      注意：3是XMLHTTPRequest异步对象内部处理。（我们不用）
+		4：异步请求对象将数据解析完毕。      此时开发人员在4时处理数据，更新当前页面。
+	status属性：
+		200："ok"  通信成功，请求成功
+		404：资源未找到
+		500：服务器端代码出错
+
+    全局刷新（第一种方式）：
+           某servlet文件-->[
+    	servlet接收请求参数：
+	    String name名 = request.getParameter("name名")  //页面框中的name="名"，接收的参数包括表单提交，URL重写传的参数等
+	servlet处理后数据存入到request：
+	    request.setAttribute("msg",msg);   //存入后的数据名称为msg，当前的存入的java对象为msg
+	servlet转发到新页面：
+				//此路径表示为WEB-INF中的result.jsp页面
+                    request.getRequestDispatcher("/result.jsp").forward(request, response);
+	新页面result.jsp中显示response返回的数据：
+	<body>
+	       <!--  该处使用了EL表达式来显示数据  -->
+	       <p>${msg}</p>  
+	</body>
+
+小注：EL表达式来源：https://blog.csdn.net/w_linux/article/details/79850223
+           ]
+
+
+    全局刷新（第二种方式）：
+         将上述（servlet转发到新页面）步骤更换：
+	//使用HttpServletResponse输出数据
+	response.setContentType("text/html;charset=utf-8");   //输出数据的格式是网页的，编码为utf-8
+	//获取PrintWriter对象
+	PrintWriter pw = response.getWriter();
+	//输出数据
+	pw.println(msg);
+	//清空缓存
+	pw.flush();
+	//关闭
+	pw.close();
+
+
+     局部刷新（基础原理）：
+       1.新建jsp，使用XMLHttpRequest异步对象
+          使用异步对象的四个步骤：
+	1.创建
+	2.绑定事件
+	3.初始请求
+	4.发送请求
+        2.创建服务器的servlet，接收并处理数据
+	
+         例：jsp文件部分代码：
+	<script type="text/javascript">
+	      function doAjax(){
+		//使用内存中的异步对象，代替浏览器发送请求。
+	      	//1.创建异步对象
+	      	var xmlHttp = new XMLHttpRequest();
+	      	//2.绑定事件
+	      	xmlHttp.onreadystatechange = function(){
+		        	if(xmlHttp.readyState == 4 && xmlHttp.status == 200){
+		        	//处理服务器端的数据，更新当前页面
+		        		var data = xmlHttp.responseText;
+				//将下方的id=mydata的元素的文本内容更新为data中的内容
+		       		document.getElementById("mydata").innerText = data;
+			}
+	      	}
+	      	//3.初始请求数据。
+		var name = document.getElementById("name").value;    //获取下部id=name的文本框中的值
+		//拼接get的传递参数：url?id名=value值&id名=value值....
+		var param = "name=" + name;
+	      	xmlHttp.open("get", "bmiAjax?" + param,true);    //get提交方式，携带后续参数并转发到bmiAjax页面，异步。
+	      	//4.发起请求
+	      	xmlHttp.send();
+	      }
+	      
+	</script>
+	<body>
+	      <!--  Ajax可以不使用form表单  -->
+	      用户名：<input type="text" id = "name" /><br>
+	      <!--  onclick绑定事件，上部script写js脚本  -->
+	      <input type="button" value="执行Ajax" onclick="doAjax()">
+	      <br/>
+	      <br/>
+	      <div id="mydata">等待加载数据....</div>
+	</body>
+
+            servlet中部分代码：
+	//使用HttpServletResponse输出数据
+	response.setContentType("text/html;charset=utf-8");   //输出数据的格式是网页的，编码为utf-8
+	//获取PrintWriter对象
+	PrintWriter pw = response.getWriter();
+	//输出数据
+	pw.println(msg);
+	//清空缓存
+	pw.flush();
+	//关闭
+	pw.close();
+
+json分类：
+	1、json对象，JSONObject。格式：名称:值，也可以看做是 key:value 格式
+	2、json数组，JSONArray。格式：[{key1:"value1", "key2":"value2"}, {key1:"value3","key2":"value4"}....}]
+	
+     json的使用：
+	1）json格式好理解
+	2）json格式数据在多种语言中比较好处理。java，JavaScript读写json格式数据都容易。
+	3）json格式数据占用空间小，网络中传输速度快，用户体验好
+	
+	java中的json工具库：gson（google），fastjson（不是最符合json处理规范的），jackson（用就完事了），json-lib（别用）
+
+     jackson的使用：
+	//jackson把实体类对象转为json
+	ObjectMapper om = new ObjectMapper();
+	//writeValueAsString把有参数的java对象转为json格式的字符串，需要抛异常
+	String json = om.writeValueAsString(实体类对象);
+
+IDEA如何查看web项目的页面位置：
+	EditConfigurations --> 服务器选择 --> Deployment --> 需要查看的项目 --> Application Context
+IDEA如何安装插件：
+	file --> settings --> plugins
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+jquery：
+       定位：一个JavaScript库，封装了JavaScript相关方法调用，简化JavaScript对HTML DOM的操作。
+
+	jquery使用$("#id")，$(".class名")，$(标签名)分别封装了document.getElementById()，
+	document.getElementsByClassName()和document.getElementsByTagName()。
+
+-----------------------------------待编------------------------------------------------------------------------
+
+
+    dom对象转换为jquery对象：$(dom对象)
+    jquery对象转换为dom对象：从数组中获取第一个对象，第一个对象就是dom对象，使用[0]或者get(0)获取
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+理解即可
+JDK动态代理（AOP）：
+      基于反射机制。
+
+	掌握程度要求：
+     	      1.什么是动态代理？
+ 	      2.知道动态代理能做什么？
+
+	开发中会遇到的情况：a 不能调用 c 的方法，
+			在 a 和 c 之间创建一个 b 代理，c 让 b 访问。
+			a --> 访问b --> 访问c
+
+       代理模式：为其他对象提供一种代理以控制对这个对象的访问。
+                        客户类真正想要访问的对象是目标对象，但客户类真正可以访问的对象是代理对象。
+	        代理类和目标类要实现同一个接口。
+
+             作用：1.功能增强：在原有的功能上，增加了额外的功能
+                       2.控制访问：代理类不让你访问目标
+
+       实现代理的方式：
+	1.静态代理：代理类是自己手动实现的，自己创建一个java类，表示代理类。同时要代理的目标类是确定的。
+	       特点：1.实现简单      2.容易理解
+	       缺点：1.目标类增加，代理类可能也需要成倍的增加。代理类数量过多
+		 2.当接口中功能增加，或者修改，会影响众多实现类，厂家类，影响比较多（牵发动身）
+
+	代理类完成的功能：
+	       1、目标类中的方法调用
+	       2、功能增强
+
+	2.动态代理：在程序执行过程中，使用jdk反射机制，创建代理类对象
+	    在静态代理中目标类很多时候，可以用动态代理，避免静态代理的缺点。
+	    动态代理中即使目标类很多，代理类数量可以很少
+	
+
+	jdk动态代理：
+		1、反射：Method类：表示方法。类中的方法。 通过Method可以执行某个方法。
+
+		2、jdk动态代理的实现
+		反射包 java.lang.reflect中有三个类：InvocationHandler，Method，Proxy，
+			1）InvocationHandler（调用处理器）：接口，一个方法invoke()，表示代理对象要执行的功能代码。
+ 
+				//
+			方法原型：public Object invoke(Object proxy, Method method, Object[] args)
+			参数：Object proxy：jdk创建的代理对象，无需赋值
+			          Method method：目标类中的方法，jdk提供method对象
+			          Object[] args：不定长参数，目标类方法的参数，jdk提供的
+			
+			怎么使用：
+				1、创建一个接口实现类InvocationHandler
+				2、重写invoke（）方法，把静态代理的代理类的功能写入方法体
+
+			2）Method类：表示方法的，目标类中的方法。
+				作用：通过Method可以执行某个目标类中的方法。Method.invoke()
+					method.invoke(目标对象，方法的参数) 等同于float price = factory.sell(amount);
+
+			3）Proxy类：核心对象，创建代理对象。之前创建对象都是new构造方法，现在用Proxy类方法，代替new
+			     方法：静态方法  newProxyInstance()
+			     作用等同于静态代理中的new Taobao()
+
+		Proxy.newProxyInstance(接口的类加载器，接口中的方法，代理对象)
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+maven（项目管理工具）：
+	
+	maven约定目录结构：
+		Hello   根目录/工程名
+		    | --- src   源代码
+		    | --- | --- main    主程序
+		    | --- | --- | --- java   主程序的程序包和包中的java文件
+		    | --- | --- | --- resources   java程序中要使用的配置文件
+		    | --- | --- test   测试程序代码和文件
+		    | --- | --- | --- java   测试程序包和包中的java文件
+		    | --- | --- | --- resources   测试java程序中要使用的配置文件
+		    | --- pom.xml   maven核心文件
+
+	构建：项目的构建。
+	构建是面向过程的，就是一些步骤，完成项目代码的编译，测试，运行，打包，部署等等。
+	maven支持的构建：
+		1、清理。把之前项目编译的东西删除掉，为新的编译代码做准备。
+		2、编译。把源代码编译成.class可执行文件。（批量化，javac一次只能编译一个）
+		3、测试。maven可以执行批量测试程序代码，验证功能正确性。
+		4、报告。生成测试结果的文件，测试通过没有。
+		5、打包。把项目中所有的class文件，配置文件等所有资源放到一个压缩文件中。这个压缩文件
+		就是项目结果文件。通常是.jar为扩展名的。对于web应用，压缩文件扩展名是.war。
+		6、安装。把生成的文件jar，war安装到本机仓库。
+		7、部署。程序安装好之后可以执行。
+
+	maven核心概念：
+		1、pom（project object model）：项目对象模型。maven把一个项目当做一个模型使用，
+			控制maven构建项目的过程，管理jar依赖。
+		2、约定的目录结构：maven项目的目录和文件位置都是规定好的。
+		3、坐标：唯一的字符串，表示资源的。
+		4、依赖管理：管理项目用到的jar包。
+		5、仓库管理（了解）：资源存放的位置。
+		6、生命周期（了解）：maven工具构建项目的过程，就是生命周期。
+		7、插件和目标（了解）：执行maven构建的时候用的工具是插件。
+		8、继承：类似java继承
+		9、聚合：把多个项目集合到一起
+
+		pom：
+			1、坐标(gav)：groupId、artifactId、version
+		         		组织名（公司），项目名（model），项目版本号
+
+			2、packaging（可不写）：打包后压缩文件扩展名，默认是jar，web应用是war
+
+			3、依赖：dependencies 和 dependency    //相当于import
+				项目中要使用的各种资源说明
+
+				例：	junit 单元测试依赖
+				  	<dependency>
+				  		<groupId>junit</groupId>
+  						<artifactId>junit</artifactId>
+  						<version>4.13</version>
+						<scope>test</scope>   <!--  依赖的范围  -->
+  					</dependency>
+
+				3.1在maven项目中使用junit框架：
+					在maven项目中的src/test/java目录下，创建测试程序。
+					   推荐的创建类和方法的提示：
+					   1、测试类的名称：Test + 要测试的类名
+					   2、测试的方法名称：Test + 方法名
+	
+					例：要测试HelloMaven，
+					创建测试类  TestHelloMaven
+					@Test
+					public void testAdd(){
+						测试HelloMaven中的add方法是否正确
+					}
+					
+					其中TestAdd叫做测试方法，他的定义规则：
+					1、方法是public，必须的
+					2、方法没有返回值，必须的
+					3、方法名称自定义，推荐是Test + 方法名
+					4、方法上面必须加 @Test
+					
+						//期望值，实际值
+					Assert.assertEquals(30,res)  //相等通过，不相等抛异常
+
+				maven命令：
+					mvn compile：编译main/java/目录下的.java为.class文件，同时把class拷贝到target/classes目录下
+						        把main/resources目录下的所有文件拷贝到target/classes目录下
+
+
+
+					log4j日志依赖
+					<dependency>
+  						<groupId>log4j</groupId>
+  						<artifactId>log4j</artifactId>
+				  		<version>1.2.17</version>
+				  	</dependency>
+			4、properties：设置属性
+
+			5、build：maven项目构建时的配置信息。比如编译插件的jdk版本。
+
+	控制配置 maven构建项目的参数设置，设置jdk版本：
+	<build>
+		配置插件
+		<plugins>
+			配置具体的插件
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				插件的名称
+				<artifactId>maven-compiler-plugin</artifactId>
+				插件的版本
+				<version>3.8.1</version>
+				配置插件的信息
+				<configuration>
+					告诉maven 我们的代码是在jdk1.8上编译的。
+					<source>1.8</source>
+					程序应该运行在1.8的jdk上
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	使用模板创建项目：
+		1、maven-archetype-quickstart：普通的java项目
+		2、maven-archetype-webapp：web工程
+		(web页面乱码处理：jsp文件首行指定编码：<%@ page contentType="text/html;charset=UTF-8" language="java" %>)
+			
+	依赖范围（scope）：
+		值：compile（全阶段使用），test（只在测试阶段使用），provided（提供者|不参与打包部署|）
+
+	maven常用操作：
+		1、maven属性设置
+			<properties>设置maven的常用属性
+		2、maven的全局变量
+			自定义的属性，1.在<properties>通过自定义标签声明变量（标签名就是变量名）
+				        2.在pom.xml文件中的其他位置，使用${标签名}使用变量的值
+
+		3、资源插件
+		<build>
+			<resources>
+			<resource>
+			<directory>src/main/java</directory>     <!--  所在的目录  -->
+			<includes>     <!--  包括目录下的.properties，.xml文件都会扫描到  -->
+			<include>**/*.properties</include>
+			<include>**/*.xml</include>
+			</includes>
+			<filtering>false</filtering>     <!--  选项false不启用过滤器，*.property已经起到过滤的作用了  -->
+			</resource>
+			</resources>
+		</build>
+
+		作用：mybatis中会使用到。
+
+		1.默认没有使用resources的时候，maven执行编译代码时，会把src/main/resources目录中的文件拷贝到target/classes目录中。
+		   对于 src/main/java目录下的非java文件不处理，不拷贝到target/classes目录中
+
+		2.程序有需要把一些文件放在 src/main/java目录中，当执行java程序时，需要用到src/main/java目录中的文件。
+		   需要告诉maven在 mvn compile src/main/java 目录下的程序时，需要一同把非java文件拷贝到target/classes目录中  
+		   //告诉maven你必须去处理！
+		   此时就需要在<build>中加入<resources>
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Linux：
+
+	目录结构：
+	/：唯一的根目录
+	| -- /root：系统管理员目录。
+	          | -- /root/Desktop：
+	          | -- /root/Maildir：
+	| -- /bin -> usr/bin：存放系统预装的可执行程序，该目录下的可执行文件可以在系统任何目录下执行
+	| -- /boot：存放启动Linux时使用的一些核心文件，包括一些连接文件和镜像文件
+	| -- /dev：Device（设备）缩写，存放Linux的外部设备
+	| -- /etc：存放所有的系统管理所需要的配置文件
+	| -- /home：用户主目录，一般以用户自己的账号命名，叫用户的根目录；用户登录后，默认打开自己的根目录
+	| -- /var：存放不断扩充的东西，经常被修改的文件等，例如运行的各种日志文件。
+	| -- /lib：存放系统最基本的动态连接共享库，类似Windows的DLL文件
+	| -- /usr ：Linux的系统资源目录，存放一些可执行文件或者系统的文件库。
+	        | -- /bin：存放用户自己的可执行文件，该目录下的可执行文件可以在系统任何目录下执行
+	|       | -- /lib：存放系统最基本的动态连接共享库，类似Windows的DLL文件
+	| -- /media：主要用于挂载多媒体设备。如默认情况下的光盘、优盘、硬盘等设备都挂在在此目录
+	| -- /mnt：一般是挂在镜像和硬盘一类的目录
+		
+	Kali Linux连接Xshell和Xftp：
+		1、Kali Linux网络设置为桥接模式。
+		2、Kali Linux命令行输入：
+			gedit /etc/ssh/sshd_config：修改permitRootLogin为yes、passwordAuthentication为yes
+			service ssh start
+			service ssh status
+			ifconfig：记下IP地址
+			Xshell或者Xftp建立会话连接Kali Linux
+
+			vim快捷键：
+				1、复制当前行：在一般模式下，按yy：复制一整行到剪切板
+					                     	再按p：粘贴剪切板内容到光标处
+
+				2、复制当前行及下五行：在一般模式下，先按5，再按yy：复制内容到剪切板
+					                     	再按p：粘贴剪切板内容到光标处
+
+				3、文本文件中搜索关键字：在命令模式下，输入/关键字，回车。
+							再按n表示光标查找下一个关键字
+					
+				4、删除光标所在行：在一般模式下，按dd，删除光标所在行
+
+				5、删除光标所在行及下五行：在一般模式下，按5，再按dd
+
+				6、撤销刚输入的字符：一般模式下，按u
+
+				7、一般模式下，跳转到文档最首行[gg]和最末行[G]
+
+				8、显示文档中的行号：命令行模式下，设置行号: set nu，
+							           取消行号: set nonu
+
+	用户管理：
+		添加用户： useradd 用户名
+		添加用户并指定根目录： useradd -d /home/ww wangwu    //wangwu的根目录在home下的ww文件夹中
+		给用户设置密码： passwd 用户名
+		删除用户： userdel 用户名
+		删除用户的同时级联删除主目录： userdel -r 用户名
+		查看用户信息： id 用户名
+		切换用户：su 用户名
+		（每一个用户至少属于一个组）
+
+	组管理：
+		添加组： groupadd 组名
+		删除组： groupdel 组名
+		添加用户进组： gpasswd -a 用户名 组名
+		把用户从组中移除：gpasswd -d 用户名 组名
+		创建用户时指定所属的主组：useradd -g 组名 用户名
+
+	系统操作命令：
+		shutdown now： 立刻进行关机
+		shudown -h xxx：  xxx小时后会关机
+		shutdown –r now： 现在重新启动计算机
+		reboot： 现在重新启动计算机
+		sync： 把内存的数据同步到磁盘（同步数据库）
+	
+	文件及目录操作命令：
+		查看当前所在目录： pwd
+		查看指定目录下的所有子目录和文件列表： ls 指定目录 例：ls /home
+		显示指定目录下的所有子目录和文件（包括虚拟目录 . 和 .. ）
+		查看文件的详情信息： ls -l (指定目录[不写默认查看当前目录下])  简写：ll
+		切换目录：cd 目录名  
+			~： 当前用户的根目录  简写cd即可回到当前用户根目录
+		创建目录： mkdir 目录名
+				-p： 创建多级目录
+		删除目录：rmdir 目录名
+		创建一个或者多个空文件：touch 文件名列表（文件名以空格相隔）
+			touch t1.txt t2.txt  //vi，vim没有文件时也可以创建空文件出来
+		复制文件：cp source源 dest目标
+			cp test2 test5
+				-r：把test2目录递归的复制到test5中
+		删除文件或目录： rm 文件名/目录名
+				-f： 强制删除不提示
+				（rm -rf /*）（删库跑路专用命令）
+		移动文件或目录： mv source dest
+				mv t1.txt t2.txt  //相当于文件重命名
+		查看文件内容： cat 文件名
+				-n显示行号
+		分页查看文件内容：
+			一次性加载文件所有内容到内存，分页显示：more 文件名
+			分页加载文件所有内容到内存，分页显示：less 文件名
+			回车翻行，空格翻页，q退出
+		查看文件头行： head 文件名
+				head -n 6 t1.txt   //查看t1.txt文件的头6行
+		查看文件尾行： tail 文件名
+				tail -n 5 t1.txt   //查看t1.txt文件的尾5行
+		echo：输出系统变量或者常量值到命令行终端
+			echo $JAVA_HOME
+			echo Hello World！
+		
+		把前一个查看命令的结果输出到指定的文件中： 查看命令[ls] > 文件名   //目标文件不存在时会新建，文件存在会覆盖其内容
+						       查看命令[ls] >> 文件名   //追加写入不覆盖
+
+	Linux关于日期和时间的操作命令： date 关键字
+		1）查看系统当前完整日期和时间： date
+		2）查看系统当前年份： date +%Y
+		3）查看系统当前月份： date +%m
+		4）查看系统当前日期： date +%d
+
+		date '+%Y-%m-%d %H-%M-%S'  //设定显示时间格式为 yyyy-MM-DD HH:mm:ss
+		date -S 'yyyy-MM-DD HH:mm:ss'  //数字替换字母，设定当前系统时间
+
+		cal 查看当月日历；cal 指定年份，查看指定当年日历
+	Linux关于搜索文件或目录的命令： 
+		find [搜索范围] [搜索标准] 关键字
+				-name： 默认按名字
+				-size： 按文件大小
+				-user： 按文件所有者
+
+		locate：直接在目录树中查找文件或目录，不需要访问磁盘，直接访问内存，效率比find高
+			updatedb
+			locate
+
+		搜索过滤命令，在前一个搜索命令结果中按名称进一步过滤：
+			搜素命令 |grep [选项] 过滤条件
+			查找命令 |grep [选项] 过滤条件
+				       -i：忽略大小写
+
+		压缩或者解压单个文件命令：
+			gzip 文件名： 压缩单个文件，生成一个.gz压缩包   //压缩后自动删除被压缩文件
+			gunzip .gz压缩包名： 解压.gz压缩包   //解压后自动删除压缩包文件
+
+		压缩（打包）或者解压多个文件或目录：
+			zip  目标压缩包名称（常用.zip压缩包） 文件或者目录列表：
+			unzip 压缩包名（.zip）： 将指定的.zip压缩包解压到当前目录
+					  -d 指定解压目录名
+			tar [选项]
+			        -c：打包或者压缩  目标压缩包名 文件或目录
+			        -x：解压  压缩包名 -C：指定解压目录 
+						
+			标准格式： tar -zcvf xxx.tar.gz 文件或者目录列表
+				  tar -zxvf xxx.tar.gz -C 解压目录名
+
+	文件/目录与组：
+		每个用户至少属于一个组用户不能独立于组存在，用户可以属于多个组
+		每个文件或目录必须属于一个组，且只能属于一个组
+		文件或目录通过组来控制哪些用户可以对其进行哪些操作，即文件或目录的访问权限
+			文件或者目录将用户分为三类：
+				所有者：默认情况下，文件或目录所有者都是创建者，可改
+				同组用户：和文件或目录属于同一个组的用户
+				其他组用户：
+		查看文件所有者和所在组： ls -l   //简写ll
+		修改文件的所有者：chown 新所有者 文件名
+			chown zhangsan t1.txt
+		修改文件所有者及组： chown 新所有者:新组 文件名/目录名
+				             -R： 递归修改
+		修改文件或目录的所在组： chgrp 新组 文件名/目录名
+		文件的三种权限： 读（Read），写（Write），执行（Execute）
+			读：cat more less head tail
+			写：vi vim 
+			执行：如果该文件是可执行文件（.sh），可以直接运行，比如：./xxx.sh
+		目录的三种权限：
+			读：ls
+			写：修改目录中的内容，例：创建子目录，删除子目录，创建文件，删除文件，重命名文件或目录
+			执行：可以进入该目录，比如cd
+		文件或目录的权限控制：所有者权限，同组用户权限，其他组用户权限
+			r，w，x  分别表示读，写，执行的权限
+			u，g，r，a 分别表示所有者，同组人员，其他组人员，全部人员
+			+，-，= 分别表示增加，减少，设置权限
+			例：chmod g-w,o+w t1.txt
+
+	Linux中进程管理：
+		线程：一个程序的线路
+		进程：一个程序的执行，一个进程占用一个端口
+
+		查看进程： ps 
+			       -e： 显示所有进程信息
+			       -ef：全格式 显示所有进程信息
+			ps -ef |grep mysql
+		强制杀死进程：kill -9 PID(进程号)
+
+	Linux中服务（守护进程）管理：
+		操作服务命令：systemctl [start | stop、restart、reload、status、enable] 进程
+				         开启  关闭      重启                   查看       设置
+		（Kali Linux 使用ufw工具操作防火墙）
+
+	Linux中软件包的管理：软件安装包
+		1、RPM命令：
+			查看系统中已经安装的rpm安装包： rpm -qa
+			卸载rpm包： rpm -e 
+			安装rpm包： rpm -ivh
+
+		YUM包管理：
+			当前系统已经安装的rpm软件包：yum list installed
+			卸载rpm包：yum remove 卸载软件包全名
+			安装rpm包：yum install 安装软件包全名
+
+	Xftp与Xshell连接Linux：
+			1、service ssh status  //查看Linux是否已经开启了ssh协议
+			2、service ssh start   //Linux开启ssh协议
+			3、ifconfig   //查看Linux的ip地址
+			3、Xftp和Xshell中输入Linux的ip地址，用户名，密码，连接成功！
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+sql语句
+	增：insert into 数据表 values(数据);
+	删：delete from 数据表 where 条件;
+	改：update 数据表 set 数据修改 where 条件
+	查：select 查询字段 from 数据表 where 条件 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Mybatis：
+
+	三层架构：项目开发中，遵循的一种开发模式
+		界面层：接收客户端的输入，调用业务逻辑层进行功能处理，返回结果给客户端。以往项目的servlet
+		业务逻辑层：进行整个项目的业务逻辑处理，向上给界面层提供处理结果，向下访问数据库调用数据
+		数据访问层：专门进行数据库的增删改查操作，向上为业务逻辑层提供数据。
+
+		界面层<-------->业务逻辑层<-------->数据访问层   //不可跨层访问
+			
+	常用的框架SSM：
+		Spring：它是整合其他框架的框架，核心是IOC（控制翻转）与AOP（面向切面编程），由20多个模块构成。
+		SpringMVC：专门用来优化控制器（Servlet），提供了极简单的数据提交，数据携带，页面跳转的功能。
+		Mybatis：持久化层的一个框架，用来进行数据库访问的优化，专注于Sql语句，极大的简化了JDBC的访问。
+
+	框架是什么？
+		它是一个半成品软件，将所有的公共的，重复的功能解决掉，帮助程序快速高效的进行开发，它是可复用，可扩展的。
+
+	添加框架的步骤：
+		1、添加依赖
+		2、添加配置文件
+
+	具体步骤：
+		1、新建库建表
+		2、新建maven项目，quickstart
+		3、目录补全
+		4、pom.xml添加mybatis依赖，mysql依赖
+		5、pom.xml添加资源文件指定
+		6、idea添加数据库可视化
+		7、添加数据库的jdbc.properties属性文件（数据库配置）
+		8、添加SQLMapConfig.xml文件，Mybatis核心配置文件
+		9、创建实体类来封装数据
+		10、添加表的增删改查功能的Mapper.xml文件
+		11、测试类测试
+
+.xsd为描述文档
+
+	Test测试类：
+	//使用文件流读取核心配置文件SqlMapConfig.xml
+        	InputStream in = Resources.getResourceAsStream("SqlMapConfig.xml");
+        	//创建sqlSessionFactory工厂
+       	SqlSessionFactory factory = new SqlSessionFactoryBuilder().build(in);
+        	//取出SqlSession对象
+	//参数默认为false，手动提交事务，写true为自动提交，修改后增删改不需要sqlSession.commit();
+        	SqlSession sqlSession = factory.openSession();
+        	//完成查询操作  (增删改返回值是影响的行数，用int接收)
+        	List<Items> list = sqlSession.selectList("xzw.getAll");  //xzw为数据访问层xml中namespace的值
+        	list.forEach(items -> System.out.println(items));
+	//切记切记切记：增删改语句需要程序员手动提交
+	//sqlSession.commit();
+        	//关闭SqlSession
+        	sqlSession.close();
+
+	增删改查mapper.xml文件中的#{}与${}使用区分
+		sql语句中有需要' '拼字符串，使用${}去拼接，否则使用#{}占参数位并取数据
+
+		以后的业务分块：
+			界面层——UsersController ：访问业务逻辑层时，接口指向实现类 （接口 名 = new 实现类(); ）
+			业务逻辑接口层——UsersService
+			业务逻辑实现类——UsersServiceImpl ：访问数据访问层时，接口指向实现类    ///动态代理将对象代理出来
+			数据访问接口层（持久层）——UsersDao
+			数据访问实现类——UsersDaoImpl  /// --> 变更 --> UsersMapper.xml ，需要在业务逻辑层调用此文件中的功能
+			数据库
+
+	动态代理存在的意义：业务逻辑层无法new出xml文件的对象，只能进行xml文件解析才能使用其中的功能
+			解决方案就是使用动态代理
+			在业务逻辑层依然使用
+
+	动态代理遵循的7个实现规范：
+		1、UserMapper.xml文件与UserMapper.java的接口在同一目录下
+	 	2、UsersMapper.xml文件与UsersMapper.java的接口的文件名必须一致，后缀不管
+		3、UserMapper.xml文件中标签的id值与UserMapper.java的接口中方法名完全一致
+		4、UserMapper.xml文件中标签的parameterType值与UserMapper.java接口中方法的参数类型一致
+		5、UserMapper.xml文件中标签的resultType值与UserMapper.java接口中方法的返回值类型一致
+		6、UserMapper.xml文件中namespace属性必须是接口的完全限定名称
+		7、SqlMapConfig.xml文件中注册mapper文件时，使用class=接口的完全限定名称com.bjpowernode.mapper.UsersMapper
+
+	动态代理访问步骤：
+		1、建表Users
+		2、新建maven工程，刷新可视化
+		3、修改目录
+		4、修改pom.xml文件，添加依赖
+		5、添加jdbc配置文件到resources目录
+		6、添加SQLMapConfig.xml
+		7、添加实体类
+		8、添加mapper.xml文件夹，新建UserMapper接口
+		9、mapper文件夹下新建UsersMapper.xml文件，完成增删改查功能
+		10、添加测试类
+
+pom.xml中的build
+   <!-- 指定资源文件位置 -->
+    <resources>
+      <resource>
+        <directory>src/main/java</directory>
+        <includes>
+          <include>**/*.xml</include>
+          <include>**/*.properties</include>
+        </includes>
+      </resource>
+
+      <resource>
+        <directory>src/main/resources</directory>
+        <includes>
+          <include>**/*.xml</include>
+          <include>**/*.properties</include>
+        </includes>
+      </resource>
+    </resources>
+
+
+	mybatis核心配置文件设置：
+		    <!-- 读取jdbc.properties属性 -->
+		    <properties resource="jdbc.properties"></properties>
+
+		    <!-- 设置日志输出：不可修改name与value -->
+		    <settings>
+		        <setting name="logImpl" value="STDOUT_LOGGING"/>
+		    </settings>
+
+		    <!-- 注册实体类别名 -->
+		    <typeAliases>
+		        <!--  批量，name填写实体类所在的文件目录，批量注册默认别名为类名首字母变小写  -->
+		        <package name="com.bjpowernode.pojo"/>
+		    </typeAliases>
+
+		    <!-- 配置环境变量 -->
+		    <environments default="development">
+		        <environment id="development">
+		            <transactionManager type="JDBC"></transactionManager>
+			<!--  使用数据库连接池  -->
+		            <dataSource type="pooled">
+			<!--  value中填写配置文件中的名  -->
+		                <property name="driver" value="${jdbc.driverClassName}"/>
+		                <property name="url" value="${jdbc.url}"/>
+		                <property name="username" value="${jdbc.username}"/>
+		                <property name="password" value="${jdbc.password}"/>
+		            </dataSource>
+		        </environment>
+		    </environments>
+
+		mybatis批量注册数据访问层的mapper.xml文件：
+		        <mappers>
+			<package name="xml文件所在相对目录"/>   --代替-->  <mapper class/resource/url="xml路径">
+		        </mappers>
+
+	#{}和${}区别：
+		#{}是对非字符串拼接的参数的占位符。如果入参是简单数据类型，#{}可以任意写，但是如果入参是对象数据类
+		型，#{}里必须是对象的成员变量的名称。#{}可以有效防止sql注入（底层使用PrepareStatement对象）。九成
+		的使用率。
+		任意写是因为${}会被预编译为?占位，值传入后替换，最后执行sql语句
+		ps:简单数据类型：8种基本[封装]数据类型 + String
+
+		${}主要针对字符串的拼接与替换。如果入参是基本数据类型，${}里必须是value（3.5.1版本及以下），如果入参
+		是对象类型，则${}里必须是对象的成员变量的名称。${}可以替换列名表名，存在sql注入风险，少用。
+
+			<select id="getUserById" parameterType="int" resultType="users">   ==> 简单类型
+        				select id,username,sex,address from user where id = #{hehe}   ==> 随便写
+    			</select>
+
+			<insert id="addUser" parameterType="users">   ==> 实体类对象
+        				insert into user(username, birthday, sex, address) 
+				values(#{userName},#{birthday},#{sex},#{address})   ==> 对象的成员变量名称，区分大小写
+    			</insert>
+
+		解决${}的sql注入问题：
+			<select id="getUserByName" parameterType="String" resultType="users">
+        				select id,username,sex,address from user 
+				where username like '%${name}%'
+    			</select>
+		修改为↓
+			<select id="getUserByName" parameterType="String" resultType="users">
+        				select id,username,sex,address from user 
+				where username like concat('%',#{name},'%')  //若#{}中传入的是简单类型，可随便写
+    			</select>
+			tips:concat是做字符串拼接的函数
+	
+		@Param：为SQL语句中参数赋值而服务的。
+			mapper接口中某方法参数（@Param("userid")int id），Mapper.xml中可以使用#{userid}取值或${userid}字符串替换，
+			若where中需要其中值做列名，则必须使用${userid}取值
+			不使用@Param注解声明参数的时候，必须使用的是#{}来取参数。使用${}方式取值会报错。
+			不使用@Param注解时，参数只能有一个，并且是Javabean。在SQL语句里可以引用JavaBean的属性，而且只能引用JavaBean的属性。
+
+		<selectKey>标签详解：
+			keyProperty：对象中哪个属性来接收返回的键值
+			resultType：返回的主键类型
+			order：在执行语句前，还是执行语句后返回指定的键值
+
+		UUID：生成一个36位的全球不重复的一个字符串
+			java：UUID uuid = UUID.randomUUID();
+			mysql select uuid();
+			
+		动态sql：可以定义代码片段，逻辑判断，循环处理（批量），使条件判断更为简单。
+			<sql>：定义代码片段，id属性标明
+			<include>：引用代码<sql>定义的代码片段，refid属性调用<sql>
+			<if>：进行条件判断，test属性判定
+			<where>：进行多条件拼接，在查询，更新，删除中使用，和<if>配合
+			<set>：	有选择的更新（给值的更新，不给值的不更新）（和if标签配合使用），
+				至少更新一列（如果没有更新的列，set会丢失，sql语句出错，程序直接报错）
+			<foreach>：用来进行循环遍历，完成循环条件查询，批量操作
+				collection：指定入参类型。若为List集合，则为list，若为Map集合，则为map，若为数组，为array
+				item：每次循环遍历出来的值或对象
+				separator：多个值或语句之间的分隔符
+				open：语句前置
+				close：语句后置
+
+		例：批量更新操作：
+		    <update id="updateBatch">
+		        <foreach collection="list" item="u" separator=";">
+		            update user
+		            <set>
+		                <if test="u.userName != null and u.userName != ''">
+		                    username = #{u.userName},
+		                </if>
+		                <if test="birthday != null">
+		                    birthday = #{u.birthday},
+		                </if>
+		                <if test="sex != null and sex != ''">
+		                    sex = #{u.sex},
+		                </if>
+		                <if test="address != null and address != ''">
+		                    address = #{u.address},
+		                </if>
+		            </set>
+		            where id = #{u.id}
+		        </foreach>
+		    </update>
+		注：需要在jdbc.properties属性文件中url添加&allowMultiQueries=true允许多行操作。
+
+	指定参数位置：
+		入参为多个，可以通过指定位置参数进行传参，实体类包含不住的条件，诸如实体类成员变量的
+		某个区间的判断。
+		选用Map：#{}中填入传入map的key值，运行时自动将对应的value传入
+
+	返回值为map的情况：多表联合查询中没有一张表可以接收返回的全部行，可以使用map返回，返回后这些数
+			据没有任何关系，都是Object类型，返回的key值为列名或别名。
+		若返回多条map：则使用List<Map>接收，xml文件中resultType为map
+
+		数据库中列名与实体类成员变量名（查询结果与实体类属性）不一致解决方法：
+			第一种：在.xml文件中给sql语句的列名起别名，别名与实体类成员变量名一致即可。
+			第二种：在.xml文件中使用resultMap手工完成映射，主键绑定使用id，非主键绑定使用result，
+				property绑定实体类的成员变量名，column绑定数据表中的列名。
+			例:<resultMap id="Itemsmap" type="Items">
+			        <!-- 主键绑定 -->
+			        <id property="id" column="id"></id>
+			        <!-- 非主键绑定 -->
+			        <result property="name" column="mingzi"></result>
+			        <!-- 一对多操作（客户对订单）：关联查询中多余的列绑定  -->
+			        <!-- collection：集合  property：集合名称  ofType：泛型类型 -->
+			<!--        <collection property="" ofType="">-->
+			<!--            &lt;!&ndash;  泛型实体类绑定（套娃开始）  &ndash;&gt;-->
+			<!--            <id property="" column=""></id>-->
+			<!--            <result property="" column=""></result>-->
+			<!--        </collection>-->
+			    </resultMap>
+			    <select id="getAll" resultMap="Itemsmap">
+			        select id,name
+			        from items
+			<!--  <!--   inner join  -->   bug：inner会导致未下订单的用户查询不出来  -->
+			<!--  left join  -->  <!--  使用左连接可修复上述bug  -->
+			关联表
+			on 关联字段  		
+			    </select>
+			第一种与第二种的区别：resultmap可以全局使用，不用每条sql语句都取一次别名
+
+			多对一操作：将collection标签替换为association
+				collection —— 集合 —— 一对多或者多对多关系,记住对多。 
+				association —— 关联 —— 多对一或者一对一的关系。
+			<!--  property：指代当前类中多对一对象的名称  javaType：指代当前类中成员变量的类型  -->
+			<association property="" javaType="">
+
+			注：常错点：sql语句中起别名时未修改column之中的列名导致Null。
+			       association标签和collection标签可以互相嵌套，也可以自行嵌套
+
+			化解多对多关系：多对多，三张表，关系表，两外键。
+
+	缓存（没什么屁用）：
+		MyBatis框架提供两级缓存，一级和二级，默认开启一级缓存。
+		缓存就是为了提高查询的效率。
+		使用缓存后，查询流程：查询先访问缓存，缓存有则从缓存获取数据，不访问数据库；没有则访
+		问数据库，从数据库中获取数据后，将查询结果先写入缓存，然后返回到客户端。若数据库发生
+		commit操作，缓存中的数据则会被全部清空。
+
+		如何开启二级缓存：
+			1、在核心配置文件  SqlMapConfig.xml中加入设置
+			    <setting name="cacheEnabled" value="true"/>
+
+			2、在对应的实体类mapper.xml文件中的mapper标签中添加cache
+			    <cache></cache>
+				
+			3、对应的实体类需要实现java.io.serializable接口，保证实体的可序列化
+			     implements Serializable
+
+	ORM（Object Relational Mapping）（纯概念）：对象关系映射
+		Object：java中的对象
+		Relational：数据库中的表
+		Mapping：Object 和 Relational 中，数据来来回回的交互
+
+		Mybatis框架是ORM非常优秀的框架。
+		java语言中以对象的方式操作数据，存到数据库中是以表的方式进行存储，对象中的成员变量与
+		表中的列之间的数据互换称为映射。这一整套操作被称为ORM。
+
+		持久化操作：将对象保存到关系型数据库中，将关系型数据库中的数据读取并封装在对象中
+		
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+记忆练习场：
+InputStream in = Resources.getResourcesAsStream("SqlMapConfig.xml");
+SqlSessionFactory factory = new SqlSessionFactoryBuilder().build(in);
+SqlSession sqlSession = factory.openSession();
+List<Student> list = sqlSession.selectList("xzw.getAll","有值给值")  //sql配置文件
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+spring：
+	spring全家桶：spring ， springmvc ， springboot， spring cloud
+
+	作用：解决企业开发的难度，减轻对项目模块之间的管理，类和类之间的管理，帮助开发人员创建对象，管
+	          理对象之间的关系。
+
+	核心：spring ioc， spring aop 。能实现模块之间与类之间的解耦合。	
+
+	框架怎么学：框架是一个软件，别人写好的软件。
+
+	spring的第一个核心功能：ioc
+
+	IOC（Inversion of Control）：控制反转
+		思想：把对象的创建，赋值，管理工作都交给代码以外的容器实现。
+
+		控制：创建对象，对象的属性赋值，对象之间的关系管理。
+		反转：把原来的开发人员管理，创建对象的权限转移给代码之外的容器实现，由容器代替开发人
+		员管理对象，创建对象，给属性赋值。
+		正转：由开发人员在代码中，使用new构造方法创建对象，开发人员主动管理对象。
+		public static void main( String[] args ) {
+		        Student student = new Student();
+		    }
+
+		使用IOC：目的就是减少对代码的改动，也能实现不同的功能。
+
+	java中创建对象的方式：
+		1、构造方法， new 类名();
+		2、反射
+		3、序列化
+		4、克隆   ？？？
+		5、ioc，容器创建对象
+		6、动态代理
+
+	ioc的体现：
+	       servlet：1、创建类继承HttpServlet
+		     2、在web.xml中注册servlet，使用<servlet-name> myservlet </servlet-name>
+					         <servlet-class>....../MyServlet</servlet-class>
+
+		     3、没有创建servlet对象，没有new MyServlet();
+		     4、Servlet对象是Tomcat服务器创建的。
+
+	ioc的技术实现：DI
+		DI（Depandency Injection）：依赖注入，只需要在程序中提供要使用的对象名称就行，至于对
+					象如何在容器中创建，赋值，查找，都由容器内部实现。
+
+	spring使用的di实现了IOC的功能，spring底层创建对象，使用的是反射机制。
+
+        <!--  spring配置文件的标准格式  -->
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+</beans>
+
+        <!--
+            1、beans：是根标签，spring把java对象称为bean。
+            2、spring-beans.xsd 是约束文件， 和mybatis指定的  dtd 是一样的。
+        -->
+
+    <!--
+        告诉spring创建对象
+        声明bean，就是告诉spring要创建某个类的对象
+        id:对象的自定义名称，唯一值。  spring通过这个名称找对象。
+        class:类的全限定名称（不能是接口，spring使用反射机制创建对象，必须使用类）
+
+        spring底层执行操作：SomeService someService = new SomeServiceImpl();
+        spring是把创建好的对象放入map中，spring框架有一个map存放对象的。
+            springMap.put(id的值，对象)
+            例：springMap("someService", new SomeServiceImpl());
+            一个bean标签声明一个对象。
+            spring默认创建对象的时间：在创建spring的容器时（默认调用无参构造），会创建配置文件中所有的对象
+    -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+</beans>
+
+	classPathXmlApplicationContext()：表示从类路径中加载spring的配置文件
+
+
+maven的spring依赖配置：
+	    <!-- spring依赖 -->
+	    <dependency>
+	      <groupId>org.springframework</groupId>
+	      <artifactId>spring-context</artifactId>
+	      <version>5.2.5.RELEASE</version>
+	    </dependency>
+
+	junit：单元测试类，一个工具类，测试方法时使用
+	单元：指定的是方法，一个类中有很多方法，一个方法称为单元。
+
+	使用junit：
+		1、pom文件中需要加入junit依赖
+		    <!--  单元测试依赖  -->
+		    <dependency>
+		      <groupId>junit</groupId>
+		      <artifactId>junit</artifactId>
+		      <version>4.11</version>
+		      <scope>test</scope>
+		    </dependency>
+
+		2、创建测试类：
+			在src/test/java目录中创建类
+
+		3、创建测试方法
+			1）public 方法
+			2）void 返回值
+			3）方法名称建议test + 需要测试的方法名
+			4）方法无参
+			5）方法上需要加@Test注解
+
+	spring的bean的property只寻找对象的set方法并调用，没有找到即为报错，其余不管
+
+
+    <!--  applicationContext.xml中声明Student对象
+          注入：就是赋值的意思
+          简单类型：spring中规定java的基本数据类型及对应的包装类和String都是简单类型
+          di:给属性赋值
+          1、set注入（设置注入）：spring调用类的set方法，在set方法中完成赋值
+            1）简单类型的set注入
+                <bean id="xxx" class="yyy">
+                    <property name="属性名" value="属性值" >
+                    一个property只能给一个属性赋值
+                </bean>
+
+            2)引用类型的set注入：spring调用类的set方法
+            <bean id="xxx" class="xxx">
+                <property name="属性名称" ref="bean的id(对象的名称)" />
+            </bean>
+
+          2、构造注入：spring调用有参数的构造方法，在创建对象的同时，在构造方法中给属性赋值。
+             构造注入使用 <constructor-arg> 标签
+             <constructor-arg> 标签：一个<constructor-arg>表示构造方法的一个参数
+             <constructor-arg> 标签属性：
+                 name:表示构造方法的形参名
+                 index:表示构造方法的参数的位置，参数从左往右，从0开始
+                 value:构造方法的形参类型是简单类型的，使用value
+                 ref:构造方法的形参类型是引用类型的，使用ref
+                 注:name与index用一个即可，顺序写对可以省略index，推荐name提升可读性
+    -->
+    <bean id="myStudent" class="com.bjpowernode.ba03.Student">
+        <constructor-arg name="name" value="绝情" index="0"/>
+        <constructor-arg name="age" value="22" index="1"/>
+        <constructor-arg name="school" ref="mySchool" index="2"/>
+    </bean>
+    <!-- 声明School对象 -->
+    <bean id="mySchool" class="com.bjpowernode.ba03.School">
+        <property name="name" value="璃偌大学"/>
+        <property name="address" value="浙江湖州"/>
+    </bean>
+
+	小结：
+		什么是spring？
+			一个框架，核心是ioc，aop，实现解耦合
+			spring是一个容器，容器中存放java对象，需要做的是把对象放入到容器中
+		怎么使用spring？
+			spring是一个容器，把项目中使用的对象放入容器中，让容器完成对象的创建，对象之间关系的
+			管理（属性赋值），我们在程序中从容器中获取要使用的对象。
+		什么样的对象放入容器中？
+			dao类，service类，controller类，工具类
+			spring中的对象默认都是单例的，在容器中叫这个名称的对象只有一个
+		不放入到spring容器中的对象有哪些？
+			1、实体类对象：实体类数据对应数据库		//可以放，但是没有意义
+			2、servlet，listener（监听器），filter（过滤器）等	//交给Tomcat创建，不需要放到spring容器中
+		怎么把对象放入容器中？
+			1、使用xml配置文件，使用<bean>
+			2、注解
+
+	基于注解的DI：通过注解完成java对象的创建，属性赋值。
+		使用注解的步骤：
+			1、加入maven的依赖 spring-context，在加入springcontext的同时，会间接加入
+			spring-aop依赖，使用注解必须使用spring-aop依赖。
+
+			2、在类中加入spring的注解（多个不同功能的注解）
+
+			3、在spring的配置文件中，加入一个组件扫描器的标签，说明注解在项目中的位置
+    <!-- 指定多个包的三种格式 -->
+<!--     1、使用多次组件扫描器，指定不同的包 -->
+<!--    <context:component-scan base-package="com.bjpowernode.ba01"/>-->
+<!--    <context:component-scan base-package="com.bjpowernode.ba02"/>-->
+
+    <!-- 第二种方式：使用分隔符（;或者,）分隔多个包名 -->
+<!--    <context:component-scan base-package="com.bjpowernode.ba01;com.bjpowernode.ba02"/>-->
+
+    <!-- 第三种方式：指定父包 -->
+<!--    <context:component-scan base-package="com.bjpowernode"/>-->
+
+
+		学习的注解：
+			1、@Component：创建对象的，等同于<bean>的功能
+				属性：value 就是对象的名称，也就是bean的id值，（可省略不写）
+				             value的值是唯一的，创建的对象在整个spring的容器中就一个
+				位置：在类的上面
+
+				@Component(value = "myStudent")等同于
+				<bean id="myStudent" class="com.bjpowernode.ba01.Student" />
+
+			2、@Repository：放在dao的实现类上，表示创建dao对象，dao对象是能访问
+				             数据库的。
+
+			3、@Service：放在service的实现类上，创建service对象，service对象是做
+                        			       业务处理，可以有事务等功能的
+
+			4、@Controller：放在控制器（处理器）类上面，创建控制器对象的，控制
+			                            器对象能够接受用户提交的参数，显示请求的处理结果。
+
+			以上三个注解的使用语法和@component一样，都能创建对象，但是这三个注解还有额外的功能
+			@Repository，@Service，@Controller是给项目的对象分层的，当一个类不属于该三类时，
+
+小注：
+@component:通用注解，不在三层的类就用这个注解，没有特殊意义
+@Controller:springmvc的注解，具有请求转发，重定向等功能
+@Service:业务逻辑层注解，没有特殊功能，只是表示此为业务逻辑层
+@Repository:dao层注解，具有将数据库操作抛出的原生异常翻译转化为spring的持久层异常的功能
+ 
+			5、@Value：简单类型的属性赋值
+				属性：value 是String类型的，表示简单类型的属性值（可省略不写）
+				位置：1、在属性定义的上面，反射赋值，无需set方法，推荐使用。
+				          2、在set方法的上面，调用set方法进行赋值
+
+			6、@Autowired：spring框架提供的注解，实现引用类型的赋值。
+				spring中通过注解给引用类型赋值，使用的是自动注入原理，
+				支持byName，byType
+
+				属性：require，是一个boolean类型的，默认为true
+					require=true：表示引用类型赋值失败，程序报错，并终止执行。
+					require=false：表示引用类型赋值失败，程序正常执行，引用类型显示为null
+					@Autowired：默认使用的是byType自动注入。
+				
+				位置：1）属性定义的上面，不用set方法，推荐使用。
+				          2）在set方法上
+
+				如果要使用byName方式，需要做的是：
+					1、在属性上面加入@Autowired
+					2、在属性上面加入@Qualifier（value="bean的id值"）
+
+			7、@Resource：JDK注解（掌握），不是spring的，但是spring提供了支持，可以使用它给
+				          引用类型的属性赋值，使用的也是自动注入原理，支持byName，byType，默认byName
+				位置：1、在属性定义的上面，无需set方法，推荐使用
+				          2、在set方法的上面
+
+				默认byName：先使用byName自动注入，如果byName赋值失败，再使用byType进行注入。
+
+				若只使用byName进行注入，需使用以下语法
+				@Resource(name = "bean对象的id")
+
+小注：DI：如果频繁改动值，选择使用xml配置文件实现bean较好，如果改动不频繁，则使用注解。
+xml配置文件：优点：代码和值完全分开
+	       缺点：代码量大；代码和值要同时看，不直观
+
+注解：优点：快捷方便
+          缺点：
+
+		加载属性配置文件：
+		<context:property-placeholder location="classpath:test.properties" file-encoding="utf-8"/>
+
+	注解的使用步骤：
+		1、加入依赖：spring-context，间接加入spring-aop
+		2、在类中加入注解
+		3、在spring的配置文件中，加入组件扫描器的标签<context:component-scan base-package="包名">
+
+------------------------------------------------------------------------------------------------------------------------------
+	AOP：
+		1、动态代理：
+			实现方式：jdk动态代理，使用jdk中的proxy，Method，InvocationHandle创建代理对象
+				jdk的动态代理要求目标类必须实现接口。
+
+			cglib动态代理：第三方的工具库，创建代理对象，原理是继承。通过继承目标类，创建子类。
+				        子类就是代理对象。要求目标类不能是final，方法也不能是final的。
+
+		2、动态代理的作用：
+			1）在目标类源代码不改变的情况下，增加功能。
+			2）减少重复代码。
+			3）专注业务逻辑。
+			4）解耦合。让业务功能和日志，事务等非业务功能分离。
+
+		3、AOP：面向切面编程，基于动态代理的，可以使用jdk，cglib两种代理方式。
+			aop就是动态代理的规范化，把动态代理的实现步骤，方式都定音好了，让开发人员用
+			统一的方式调用动态代理。
+
+		4、AOP（Aspect Orient Programming）面向切面编程
+		Aspect：切面。给的目标类增加的功能，就是切面。例如日志，事务等都是切面
+			切面：一般都是非业务方法，独立使用的。
+
+		OOP：面向对象变成
+
+		怎么理解面向切面编程？
+		1）需要在分析项目功能时，找到切面。（最难）
+		2）合理的安排切面的执行时间。（在目标方法前，还是目标方法后）
+		3）合理的安排切面执行的位置。（在哪个类，哪个方法，增强哪些功能）
+
+		切面的术语：
+			1）Aspect：切面。表示增强的功能，就是一堆代码，完成某一个功能。非业务功能。
+				常见的切面功能有日志，事务，统计信息，参数检查，权限验证。
+
+			2）JoinPoint：连接点。连接业务方法和切面的位置。就某类中的业务方法。（增加功能的方法）
+			3）Pointout：切入点。指多个连接点方法的结合。
+			4）目标对象：给哪个类的方法增加功能，这个类就是目标对象
+			5）Advice：通知。表示切面功能执行的时间。
+
+		一个切面的三个关键要素：
+			1）切面的功能代码。切面干啥
+			2）切面的执行位置。使用Pointcut表示切面执行的位置
+			3）切面的执行时间。使用Advice表示时间，在目标方法前还是目标方法后。
+
+		aop实现
+			aop是一个规范，是动态的一个规范化，一个标准
+			aop的技术实现框架：
+				1、spring：spring在内部实现了aop规范，能做aop的工作。
+					   spring主要在事务处理时使用aop。
+					   我们项目开发中很少使用spring的aop实现，因为spring的aop比较笨重
+
+				2、aspectJ：一个开源的专门做aop的框架。
+					aspectJ框架实现有两种方式：
+						1、使用xml的配置文件
+						2、使用注解，我们在项目中要做aop功能，一般都使用注解，aspectJ有5个注解。
+
+		6、学习aspectj框架的使用。
+			1）切面的执行时间。这个执行时间在规范中叫做Advice（通知，增强）。
+			在aspectj框架中使用注解表示的。也可以使用xml配置文件中的标签
+				1）@Before  前置通知
+				2）@AfterReturning  后置通知
+				3）@Around  环绕通知
+				4）@AfterThrowing  异常通知
+				5）@After  最终通知
+				6）@Pointcut  辅助注解，定义和管理切入点
+			2）表示切面执行的位置，使用的是切入点表达式
+				AspectJ定义了专门的表达式用于指定切入点。表达式原型是：
+					execution(modifiers-pattern? ret-type-pattern
+						declaring-type-pattern?name-pattern(param-pattern)
+						throws-pattern?)
+					解释：
+						modifiers-pattern  访问权限类型
+						ret-type-pattern  返回值类型
+						declaring-type-pattern  包名类名
+						name-pattern(param-pattern)  方法名（参数类型和参数个数）
+						throws-pattern  抛出异常类型
+						?  表示可选的部分
+
+						以上表达式共4个部分：
+						execution(访问权限 方法返回值 方法声明(参数) 异常类型)
+
+						例：
+						execution(public * *(..))
+						指定切入点为：任意公共方法
+						execution(* set*(..))
+						指定切入点为：任何一个以"set"开始的方法
+
+	spring与mybatis整合：使用的技术 --> IOC
+		为什么是IOC：因为IOC能创建对象。可以把mybatis框架中的对象交给spring统一创建。开发人
+			       员从spring中获取对象，不用同时面对两个或多个框架了，就面对一个spring。
+
+mybatis使用步骤，对象：
+1、定义dao接口  StudentDao
+2、定义mapper文件  StudentDao.xml
+3、定义mybatis的主配置文件  mybatis.xml
+4、创建dao的代理对象， StudentDao = SqlSession.getMapper(StudentDao.class);
+
+	List<Student> students = dao.selectStudents();
+
+要使用dao对象，需要使用getMapper()方法，
+使用getMapper()方法，需要条件：
+1、获取SqlSession对象，需要使用SqlSessionFactory的openSession()方法。
+2、创建SqlSessionFactory对象，通过读取mybatis的主配置文件，能创建SqlSessionFactory对象
+
+需要SqlSessionFactory对象，使用Factory能获取SqlSession，有了SqlSession就能有dao，目的就是获取Dao对象
+Factory需要读取主配置文件
+
+		mybatis主配置文件信息：
+1. 数据库信息：
+<!-- 配置环境变量 -->
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <dataSource type="pooled">  <!-- 该连接池是mybatis自己的，大型项目使用时功能弱，换用独立的连接池，交给spring创建 -->
+                <!--
+                  private String driver;
+                  private String url;
+                  private String username;
+                  private String password;
+                -->
+
+                <property name="driver" value="${jdbc.driverClassName}"/>
+                <property name="url" value="${jdbc.url}"/>
+                <property name="username" value="${jdbc.username}"/>
+                <property name="password" value="${jdbc.password}"/>
+
+            </dataSource>
+        </environment>
+    </environments>
+
+2. mapper文件的位置：
+<!-- 注册mapper.xml文件 -->
+    <mappers>
+        <!-- <mapper class="com.bjpowernode.mapper.UsersMapper"></mapper> -->
+        <!-- 批量注册 --> 
+        <package name="com.bjpowernode.mapper"/>
+    </mappers>
+
+通过以上说明，我们需要让spring创建以下对象
+1、独立的连接池类的对象，使用阿里的druid连接池
+2、SqlSessionFactory对象
+3、创建Dao对象
+
+	spring事务：
+	1）事务内部提交，回滚事务，使用事务管理器对象，代替你完成commit，rollback
+	spring事务管理器（spring处理事务的模型）：使用的步骤都是固定的，把事务使用的信息提供给spring就可以了
+	事务管理器是一个接口和他的众多实现类。
+	接口PlatformTransactionManager，定义了事务重要方法 commit，rollback
+	实现类：spring把每一种数据库访问技术对应的事务处理类都创建好了。
+		mybatis访问数据库--spring创建DataSourceTransactionManager
+		hibernate访问数据库--spring创建的是HibernateTransactionManager
+	怎么使用？你需要告诉spring你用的是那种数据库访问技术，怎么告诉spring呢？
+	声明数据库访问技术对于的事务管理器实现类，在spring的配置文件中使用<bean>声明
+	例：使用mybatis访问数据库，在xml配置文件中设置
+	<bean id="xxx(自定义名称)" class="...DataSourceTransactionManager">
+	
+	2）你的业务方法需要什么样的事务，说明需要事务的类型。
+	说明方法需要的事务：
+	    1）事务的隔离级别：有4个值。mysql默认可重复读，Oracle默认读已提交
+		1.读未提交：未解决任何并发问题，存在脏读、不可重复读、幻读
+		2.读已提交：解决脏读
+		3.可重复读：解决不可重复读
+		4.串行化：不存在并发问题
+	    2）事务的超时时间：表示一个方法最长的执行时间，如果方法执行时，超过了时间，则回滚事务。
+		单位是秒，整数值，默认是 -1。
+	    3）事务的传播行为：控制业务方法是不是有事务的，是什么样的事务。
+		7个传播行为，表示你的业务方法调用时，事务在方法之间是如何使用的。
+
+		propagation_required：指定的方法必须在事务内执行。若当前存在事务，就加入到当前事务中；没有事务就
+				      创建一个新事务。最常见的传播行为，是spring默认的事务传播行为。
+		propagation_requires_new：总是新建一个事务，若当前存在事务，就将当前事务挂起，直到新事务执行完毕。
+		propagation_supports：指定的方法支持当前事务，但若当前没有事务，也可以用非事务方式执行。（查询操作）
+		以上三个需要掌握
+		propagation_mandatory：
+		propagation_nested：
+		propagation_never：
+		propagation_not_supported：
+
+	3）spring提交事务，回滚事务的时机
+	    1）当你的业务方法，执行成功，没有异常抛出，当方法执行完毕，spring在方法执行后自动提交事务。事务管理器commit方法
+	    2）当你的业务方法抛出运行时异常，spring执行回滚，调用事务管理器的rollback方法
+	    3）运行时异常的定义：RuntimeException 和他的子类都是运行时异常，空指针，参数格式
+	    4）当你的业务方法抛出非运行时异常，主要是受检异常和ERROR时，提交事务
+
+总结spring的事务
+	1、管理事务的是 事务管理和他的实现类
+	2、spring的事务是一个统一模型
+	    1）指定要使用的事务管理器实现类，使用<bean>
+	    2）指定哪些类，哪些方法需要加入事务的功能
+	    3）指定方法需要的隔离级别，传播行为，超时
+
+	你需要告诉spring，你的项目中类信息，方法的名称，方法的事务传播行为。
+
+
+spring框架中提供的事务处理方案
+1、适合中小项目使用的，注解方案：
+	spring框架自己用aop实现给业务方法增加事务的功能，使用@Transactional注解增加事务。
+	@Transactional注解是spring框架自己注解，放在public方法的上面，表示当前方法具有事务
+	可以给注解的属性赋值，表示具体的隔离级别，传播行为，异常信息等等。
+
+	使用@Transactional的步骤
+	1.需要声明事务管理器对象(此处mysql)
+	<bean id="xx" class="DataSourceTransactionManager"></bean>
+
+	2.开启事务注解驱动，告诉spring框架，我要使用注解的方式管理事务。
+	spring使用aop机制，创建@@Transactional所在的类代理对象，给方法加入事务的功能。
+	spring给业务方法执行前，先开启事务，在业务方法之后提交或回滚事务，使用aop的环绕通知
+
+	例：@Around("需要增加业务功能的业务方法名称")
+	Object myAround(){
+		开启事务，spring开启
+		try{
+			业务方法
+			spring的事务管理器.commit();
+		}catch(Expection e){
+			spring的事务管理器.rollback();
+		}
+	}
+
+	3.在你的方法上面加入@Transactional
+
+@Transactional的默认设置：
+    @Transactional(
+            //默认传播行为REQUIRED
+            propagation = Propagation.REQUIRED,
+            //默认隔离级别DEFAULT
+            isolation = Isolation.DEFAULT,
+            //是否只读
+            readOnly = false,
+            //默认抛出运行时异常，回滚事务
+            rollbackFor = {
+                    
+            }
+    )
+
+实际操作：
+spring核心配置文件中：
+    <!-- 声明事务管理器 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <!-- 1、连接数据库，指定数据源 -->
+        <property name="dataSource" ref="myDataSource"/>
+    </bean>
+
+    <!-- 2、开启事务注解驱动，告诉spring使用注解管理事务，创建代理对象
+     transaction-manager：事务管理器对象的id
+     -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+需要事务的service方法上加注解@Transactional
+
+2.适合大型项目，有很多类，方法，需要大量的配置事务，使用aspectj框架功能，在spring配置文件中
+声明类，方法需要的事务。这种方式业务方法和事务配置完全分离。
+
+	实现步骤：都是在xml配置文件中实现。
+	    1）加入aspectj依赖
+    <!-- aspectj依赖 -->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-aspects</artifactId>
+      <version>5.2.5.RELEASE</version>
+    </dependency>
+
+	    2）声明事务管理器对象
+    <!-- 声明事务管理器 -->
+    <bean id="" class="org.springframework.jdbc.datasource.DataSourceTransactionManager"></bean>
+
+	    3）声明方法需要的事务类型（配置方法的事务属性（【隔离行为，传播行为，超时】））
+
+	    4）配置aop，指定哪些类需要创建代理。
+
+需求：
+web项目中容器对象只需要创建一次，把容器对象放入到全局作用域ServletContext中
+实现：
+    使用监听器 当全局作用域对象被创建时 创建容器 存入ServletContext
+
+    监听器作用：
+    1创建容器对象，执行ApplicationContext ctx = new ClassPathXmlApplicationContext("applicationContext.xml");
+    2)把容器对象放入到ServletContext，ServletContext.setAttribute(key,ctx)
+
+    监听器可以自己创建，也可以使用框架中提供好的ContextLoaderListener
+
+-------------------------------------------------------------------------------------	-------------------------------------------------
+开发时查询
+--spring和mybatis整合在一起使用时，事务是自动提交的，无需执行SqlSession.commit();
+数据库表：建表，填写数据
+//java
+domain	bean实体类：get, set, 构造, toString方法
+dao	Dao.interface：增删改查的抽象方法
+dao	Dao.xml：实现对数据库做增删改查的语句，id为Dao接口的方法名
+service	Service.interface：编写业务抽象方法
+serv.impl	Service.class：引用DAO类型，set方法，实现业务抽象方法（切面开发时专注，功能增强由aspect做）
+	aspect：通知方法（带注解），注解名/时间，execution/位置，方法体/功能，方法参数列表joinPoint获取业务方法
+	mybatis.xml：日志输出，typeAliases设置别名（bean实体类所在包-package name），mappers注册sql映射文件（Dao.xml所在包-package name）
+controller	Servlet：id接收前端页面框参数，
+
+//resources
+spring核心配置文件	
+applicationContext.xml：管理bean，声明数据源（数据库连接池），声明Factory（引用数据库连接池，mybatis.xml），
+		       声明DAO对象（指定Factory id，指定dao接口包名），声明Service（class=serv.impl，ppy ref=声明DAO对象(接口名首小写)）
+jdbc.properties：数据库配置
+mybatis.xml：mybatis主配置文件，设置日志，设置别名，注册dao.xml文件
+
+//webapp
+WEB-INF	web.xml：注册servlet，servlet-class:servlet路径，mapping-/-url-pattern：/访问址
+	jsp：前端页面
+
+pom.xml：依赖加入，指定资源位置
+---------------------------------------------------------------------------------------------------------------------------------------
+页面数据插入数据库出现乱码：
+1.数据库设置utf-8
+2.开发工具设置utf-8
+3.servlet设置：        
+request.setCharacterEncoding("UTF-8");
+response.setCharacterEncoding("UTF-8");
+4.web.xml设置：
+<?xml version="1.0" encoding="UTF-8"?>
+5.jsp设置：
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+---------------------------------------------------------------------------------------------------------------------------------------
+400错误：客户端错误，表示提交请求参数的过程中发生问题
+404错误：页面路径问题
+405错误：请求方式不正确，get/post
+500错误：服务端代码出错
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Spring MVC：是基于spring的一个框架，实际上就是spring的一个模块，专门做web开发的。
+	       理解是servlet的一个升级
+
+	web开发底层是servlet，框架是在servlet基础上面加入一些功能，让你做web开发方便。
+SpringMVC就是一个Spring。Spring是容器，ioc能管理对象，使用<bean>，@Component，@Repository，@Service，@Controller
+	SpringMVC能够创建对象，放入到容器中（SpringMVC容器），springmvc容器中放的是控制器对象
+
+        我们要做的是 使用@Controller创建控制器对象，把对象放入到springmvc容器中，把创建的对象作为控制器使用
+        这个控制器对象能接收用户的请求，显示处理结果，就当做是一个servlet使用。
+
+        使用@Controller注解创建的是一个普通类的对象，不是Servlet。springmvc赋予了控制器对象一些额外的功能。
+
+        web开发底层是servlet，springmvc中有一个对象是Servlet：DispatherServlet（中央调度器）。
+        DispatherServlet：负责接收用户的所有请求，用户把请求给了DispatherServlet，之后DispatherServlet把请求转发给
+		     我们的Controller对象，最后是Controller对象处理请求。
+
+        index.jsp-----DispatherServlet(Servlet)-----转发，分配给-----Controller对象（@Controller注解对象）
+        main.jsp
+        addUser.jsp
+
+
+-------------------------------------------------------------------------------------------------------------------------------
+springmvc请求的处理流程
+
+	1）发起some.do
+	2）tomcat(web.xml---url-pattern知道 *.do的请求给DispatcherServlet（中央调度器）)
+	3）DispatcherServlet（根据springmvc.xml配置的注解扫描器知道 some.do去找doSome()）
+	4）DispatcherServlet把some.do转发给转发给Controller中的doSome()方法
+	5）框架执行doSome（）把得到的ModelAndView进行处理，转发到show.jsp页面
+
+精简版：some.do --- DispatcherServlet --- MyController
+抽象版：	你	           妈妈桑	         小姐姐
+
+------------------------------------------------------------------------------------------------------------------------------------
+springmvc执行过程源码分析：
+1、tomcat启动，创建容器的过程
+	通过load-on-start标签指定的1，创建DispatcherServlet对象
+	DispatcherServlet它的父类是继承HttpServlet的，它是一个servlet，被创建时会执行init()
+
+	在init()方法中：
+        //创建容器，读取配置文件
+        WebApplicationContext ctx = new ClassPathXmlApplicationContext("springmvc.xml");
+        //把容器对象放入ServletContext
+        getServletContext().setAttribute(key, ctx);
+
+	读配置文件就会读springmvc.xml，就会加载组件扫描器（component-scan）
+	上面创建容器的作用：创建@Controller注解所在的类的对象，创建MyController对象
+	这个对象放入到 springmvc的容器中，容器是map，类似map.put("MyController ")
+	
+
+	@RequestMapping：请求映射
+	作用：将一个请求地址和一个方法绑定在一起。
+	     一个请求指定一个方法处理。
+	属性：1、value 是一个String，表示请求的url地址（some.do）
+	         value的值必须是唯一的，不能重复。在使用时，推荐以"/"开头
+	位置：1、在方法的上面，常用的。
+	     2、在类的上面
+	说明：使用RequestMapping修饰的方法叫做处理器方法或者控制器方法。
+	使用@RequestMapping修饰的方法可以处理请求的，类似Servlet中的doGet，doPost
+
+	返回值：ModelAndView 表示本次请求的处理结果
+	Model：数据，请求处理完成后，显示给用户的数据
+	View：视图，比如jsp
+	
+	
+	处理器方法的参数（放在@RequestMapping注解的方法的参数列表中）：
+		HttpServletRequest：代表请求
+		HttpServletResponse：代表应答
+		HttpSession：代表会话
+		请求中所携带的请求参数
+	注：在参数列表中定义即可，mvc框架会自动赋值，直接调用即可
+例：
+    @RequestMapping(value = "/first.do")
+    public ModelAndView doFirst(HttpServletRequest request){
+        ModelAndView mv = new ModelAndView();
+        mv.addObject("msg","hohoho，springmvc");
+        mv.addObject("fun","first--->亡命编程plus" + "name：" + request.getParameter("name"));
+        mv.setViewName("other");
+        return mv;
+    }
+
+
+	@Controller：创建控制器类对象，接收请求，处理请求
+	@RequestMapping：请求映射，把请求绑定到一个方法，让这个方法处理请求
+		1.value：请求的url地址，唯一值
+		2.method：请求的方式，RequestMethod枚举类
+
+    接收参数：
+        在提交请求参数时，get请求方式中文没有乱码。（get乱码是Tomcat版本过低，可以使用过滤器，和post乱码问题一起解决）
+        post方式提交，中文有乱码，需要使用过滤器处理乱码问题。
+
+过滤器可以自定义，也可以使用框架中提供的过滤器 CharacterEncodingFilter（spring-web包）
+	
+	
+    现在做ajax，主要使用json的数据格式。实现步骤：
+    1、加入处理json的工具库依赖，springmvc默认使用的jackson。
+    2、在springmvc配置文件之间加入<mvc:annotation-driven> 注解驱动。
+        //    ObjectMapper            java对象
+        json = om.writevalueAsString(student)
+    3、在处理器方法上加入@ResponseBody注解
+        response.setContentType("application/json;charset=utf-8");
+        PrintWriter pw - response.getWriter();
+        pw.println(json);
+	
+	
+	
+	
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+SpringBoot：
+	相当于不需要配置文件的spring+springmvc。常用的框架和第三方库都配置好了。拿来就可以直接使用了，开发效率高。
+
+	JavaConfig：使用java类作为xml配置文件的替代，是配置spring容器的纯java方式。在这个java类可以创建java对象，把对象放入spring容器中（注入）
+
+注解：	@configuration：放在一个类的上面，表示这个类是作为配置文件使用的。
+	@Bean：声明对象，把对象注入到容器中。
+	@ImportResource：类上方，导入其他的xml配置文件，等于在xml中 <import resources="其他配置文件">
+	指定多个配置文件：@ImportResource（value={“classpath:applicationContext.xml”, "classpath:applicationContext2.xml"}）
+	@PropertyResource：读取
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Vue：
+	Vue是一款渐进式JavaScript框架，用来动态构建用户界面。
+		遵循MVVM模式 
+		编码简洁、体积小、运行效率高，适合移动/PC端开发
+		本身只关注UI，可以轻松引入vue插件或其他第三库开发项目。
+		国内大范围使用，生态系统完善。
+	<script>
+		new Vue({
+			el: '#app',
+			data: {
+				
+			}
+			})
+	</script>
+
+
+	v-html="data数据名"：指令解析成了innerHTML
+	v-text="data数据名"：数据填充到标签中
+	{{data中的数据名}}
+	v-bind:绑定html标签属性="data中的数据"
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+开源框架：若依
+地址：http://ruoyi.vip/
+
+	目标：1、使用，减少开发工作量，便于二次开发
+	          2、学习优秀开源项目底层的编程思想，设计思路
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Android开发：
+	项目结构：
+	app：项目中的代码和资源...，工作核心目录
+		build：可删除
+		libs：第三方jar包
+		src：
+			androidTest：Android测试用例
+			main：
+				java：java代码
+				res：
+					drawable：放图片的
+					layout：App页面布局文件
+					mipmap：启动图标
+					values：常量定义文件。如字符串常量 strings.xml，像素常量 dimens.xml
+				AndroidManifest.xml：清单文件（组件注册，权限，图标）
+			test：测试
+		.gitignore：上传git时使用的，进行模块版本管理
+		build.gradle：模块构建脚本（依赖加入）
+		proguard-rules.pro：项目代码混淆规则
+	gradle
+		wrapper：
+	.gitignore：上传git时使用的，进行工程版本管理
+	build.gradle：项目全局的构建脚本（接手项目时，一般不需要动）
+	gradle.properties：全局配置文件
+	gradlew：执行gradle命令，Linux或mac系统上执行使用
+	gradlew.bat：执行gradle命令，win系统上执行使用
+	local.properties：SDK路径
+	settings.gradle：项目引入模块
+
+		系统服务SystemService
+		运行环境Context
+		窗口管理器WindowManager
+
+		android:layout_height=布局高  参数：int dp
+		android:singleLine=内容单行显示　参数：true/false
+		android:focusable=获取焦点  参数：true/false
+		android:focusableInTouchMode=用于控制视图在触摸模式下是否可以聚焦  参数：true/false
+		android:ellipsize=在哪省略文本    参数：start/end/middle/marquee  头尾中省略，横向滚动(焦点)
+		android:marqueeRepeatLimit=字幕动画重复的次数
+		android:orientation=线性布局方向  参数：horizontal/vertical  水平(mr)/垂直
+		android:layout_gravity=布局对齐方式  同下，与上级对齐
+		android:gravity=对齐方式  参数：左右顶底中，水中(center_horizontal)，垂中。对下级视图
+		android:fillViewport=填充视图  参数：true
+		滚动视图：ScrollView  垂直滚动 layout_width:match_parent，layout_height:wrap_content
+
+		简单控件：文本视图TextView，按钮Button，图像视图ImageView，图像按钮ImageButton
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+日语：
+
+	あ段(a)	い段(i)	う段(u)	え段(e)	お段(o)	
+あa行	あa「安」	いi「以」	うu饿	えe[ei]	おo	
+	ア	イ	ウ	エ	オ	
+かk行	かka[加]	きki	くku	けke[计]	こko[己]	
+	カ	キ	ク[久]	ケ	コ	
+さs行	さsa[左]	しsi	すsu	せse	そso[曾]	
+	サ[散]	シ(xi)	ス	セ	ソ	
+たt行	たta[太]	ちti{qi}	つtu{呲}	てte{忒}	とto{拖}	
+	タ	チ[千]	ツ	テ	ト	
+なn行	なna[奈]	にni[仁]	ぬnu[奴]	ねne	のno	
+	ナ	ニ	ヌ	ネ	ノ	
+はh行	はha尾wa	ひhi[比]	ふhu{呼}	へhe	ほho[保]	
+	ハ	ヒ	フ[不]	ヘ	ホ	
+まm行	まma[末]	みmi	むmu[武]	めme[女]	もmo[毛]	
+	マ	ミ	ム	メ	モ	
+やy行	やya[也]		ゆyu[由]		よyo	
+	ヤ		ユ		ヨ	
+らr行	らra[良]	りri[利]	るru[留]	れre	ろro	
+	ラ	リ	ル[流]	レ	ロ	
+わw行	わwa[和]				をwo	
+	ワ				ヲ	
+	んn	
+	ン	
+浊音
+kがg行	がga	ぎgi	ぐgu	げge	ごgo
+sざz行	ざza	じzi{ji}常	ずzu常	ぜze	ぞzo
+tだd行	だda	ぢdi{ji}少	づdu{zu}	でde	どdo
+hばb行	ばba	びbi	ぶbu	べbe	ぼbo
+
+半浊音
+hぱp行	ぱpa	ぴpi	ぷpu	ぺpe	ぽpo
+				
+ha ji me ma si te
+はじめまして:初次见面
+
+do u zo yo ro si ku o ne ga i si ma su
+どうぞよろしくおねがいします:请多多关照
+
+do u mo
+どうも：谢谢
+
+a ri ga to u go za i ma su
+ありがうございます:谢谢你
+
+i i e       do u i ta si ma si te
+いいえ　どういたしまして：不用谢
+
+o ka e ri na sa i
+おかえりなさい：欢迎回来
+
+go ti so u sa ma de si ta
+ごちそうさまでした：多谢款待
+
+o ya su mi na sa i
+おやすみなさい：晚安
+
+sa yo u na ra
+さようなら：长时间不见
+
+da i su ki de su
+だいすきです：最喜欢你了
+
+a no，su mi ma senn
+あの、すめません：那个，打扰一下
+
+i ta da ki ma su
+いただききます：我开动了
+
+
+
+na nn ni shi te ru
+何にしてる:你在干什么
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+面试流程：
+	1、网面：
+		1.1 自我介绍
+		1.2 面试官问题回答
+		1.3 提问：
+			面试员开发经验：公司主体实力
+			公司主体使用的技术：个人与公司的大方向
+			团队人员和分工，自己需要做的大体工作：详细工作
+			是否有前辈带领
+			发展空间：
+			
+	2、线下笔试
+
+	3、工休时间，工资结构
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+🔨 结构化 SQL 生成器使用小手册：
+	1、main是主体的语句
+	2、@名称() 才能调用下面的 "名称"段
+	3、@名称(id = 1) ：可以给 "名称"段中的id赋值，其中"名称"段的id赋值为 #{id}
+	4、主分段和子分段里的select 后面不要用 * 号代替，写清列名
+
+{
+    "main": "select (a / b - 1) from (@查整体(date = 今天)) a, (@查整体(date = 昨天)) b",
+    "查整体": "@查年级() union @查1班() union @查2班() where date = #{date}",
+    "查年级": "@查汇总_性别汇总() union @查汇总_性别分组() union @查汇总_爱好汇总() union @查汇总_爱好分组() union @查汇总_电脑类别汇总() union @查汇总_电脑类别分组()",
+    "查汇总_性别汇总": "@查除电脑关联表()",
+    "查汇总_性别分组": "@查除电脑关联表() group by 性别",
+    "查汇总_爱好汇总": "@查除电脑关联表()",
+    "查汇总_爱好分组": "@查除电脑关联表() where 爱好 in (xx) group by 爱好",
+    "查汇总_电脑类别汇总": "@查除三连和学习表()",
+    "查汇总_电脑类别分组": "@查除三连和学习表() group by 电脑类别",
+    "查1班": "@查1班_性别汇总() union @查1班_性别分组() union @查1班_爱好汇总() union @查1班_爱好分组() union @查1班_电脑类别汇总() union @查汇总_电脑类别分组()",
+    "查1班_性别汇总": "@查除电脑关联表() where 1班",
+    "查1班_性别分组": "@查除电脑关联表() where 1班 group by 性别",
+    "查1班_爱好汇总": "@查除电脑关联表() where 1班",
+    "查1班_爱好分组": "@查除电脑关联表() where 1班 and 爱好 in (xx) group by 爱好",
+    "查1班_电脑类别汇总": "@查除三连和学习表() where 1班",
+    "查1班_电脑类别分组": "@查除三连和学习表() where 1班 group by 电脑类别",
+    "查2班": "@查2班_性别汇总() union @查2班_性别分组() union @查2班_电脑类别汇总() union @查2班_电脑类别分组()",
+    "查2班_性别汇总": "@查除电脑关联表() where 2班",
+    "查2班_性别分组": "@查除电脑关联表() where 2班 group by 性别",
+    "查2班_电脑类别汇总": "@查除三连和学习表() where 2班",
+    "查2班_电脑类别分组": "@查除三连和学习表() where 2班 group by 电脑类别",
+    "查所有关联表": "@查信息表() left join (@查三连表()) left join (@查学习表()) left join (@查电脑表()) left join (@查全校信息())",
+    "查除电脑关联表": "@查信息表() left join (@查三连表()) left join (@查学习表()) left join (@查全校信息())",
+    "查除三连和学习表": "@查信息表() left join (@查电脑表()) left join (@查全校信息())",
+    "查信息表": "select 字段 from 信息表 where 年级 = 1",
+    "查三连表": "select 字段 from 三连表 where 年级 = 1",
+    "查学习表": "select 字段 from 学习表 where 年级 = 1",
+    "查电脑表": "select 字段 from 电脑表 where 年级 = 1",
+    "查全校信息": "select 字段 from 信息表"
+}
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+开发模板文件，附配置：
+
+//mybatis核心配置文件
+Name：mybatis-config  Extension：xml
+
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    
+    <!-- 设置日志输出 -->
+    <settings>
+        <setting name="logImpl" value="STDOUT_LOGGING"/>
+        <setting name="cacheEnabled" value="true"/>
+    </settings>
+
+    <!-- 设置别名:类名小写 -->
+    <typeAliases>
+        <!-- name:实体类所在包名-->
+        <package name="com.bjpowernode.domain"/>
+    </typeAliases>
+
+    <!-- 注册mapper.xml(sql映射文件)文件的路径 -->
+    <mappers>
+        <!-- 单个注册 -->
+        <!-- <mapper class="com.bjpowernode.mapper.UsersMapper"/> -->
+        <!-- 批量注册 name:包名，该包中的所有mapper.xml一次都能加载-->
+        <!-- <package name="com.bjpowernode.mapper"/>-->
+        
+    </mappers>
+</configuration>
+
+
+//mybatis-mapper文件
+Name：mybatis-mapper  Extension：xml
+
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+        <!-- namespace:对应dao接口路径 -->
+<mapper namespace="">
+    <!-- 增删改查标签 id:接口方法名 -->
+    <select id="" resultType="">
+        <!-- sql语句 -->
+    </select>
+</mapper>
+
+
+//spring的核心配置文件applicationContext.xml
+Name：applicationContext  Extension：xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!--
+     把数据库的配置信息，写在单独的文件，便于修改数据库的配置内容
+     location：spring知道jdbc.properties文件的位置
+     -->
+    <context:property-placeholder location="jdbc.properties"/>
+
+    <!-- 数据源 -->
+    <!-- 声明数据源DataSource，作用：连接数据库的 -->
+
+    <!--    pom.xml添加阿里的数据库连接池 -->
+    <!--    <dependency>-->
+    <!--        <groupId>com.alibaba</groupId>-->
+    <!--        <artifactId>druid</artifactId>-->
+    <!--        <version>1.2.11</version>-->
+    <!--    </dependency>-->
+    <bean id="myDataSource" class="com.alibaba.druid.pool.DruidDataSource"
+          init-method="init" destroy-method="close">
+        <property name="url"
+                  value="${jdbc.url}" /> <!-- setUrl设值注入，${配置文件中key值} -->
+        <property name="username" value="${jdbc.username}" />
+        <property name="password" value="${jdbc.password}" />
+        <property name="maxActive" value="${jdbc.maxActive}"/>
+    </bean>
+
+    <!-- factory -->
+    <!-- 声明的是mybatis中提供的SqlSessionFactoryBean类，该类内部创建SqlSessionFactory -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!-- set注入，将数据库连接池赋给DataSource -->
+        <property name="dataSource" ref="myDataSource"/>
+        <!-- mybatis主配置文件位置
+             configLocation属性是Resource类型，读取配置文件的
+             赋值使用value，指定文件的路径，使用classpath:表示文件的位置
+         -->
+        <property name="configLocation" value="classpath:mybatis.xml"/>
+    </bean>
+
+    <!-- Dao -->
+    <!-- 创建Dao对象，使用SqlSession的getMapper(StudentDao.class)
+     MapperScannerConfigurer：在内部调用getMapper
+     -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!-- 指定SqlSessionFactory对象的id -->
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+        <!-- 指定包名，包名是dao接口所在的包名
+            MapperScannerConfigurer会扫描这个包中的所有接口，把每个接口都执行
+            一次getMapper()方法，得到每个接口的dao对象。
+            创建好的dao对象放到spring容器中。
+            多个包 用,分隔
+         -->
+        <property name="basePackage" value="com.liruo.dao"/>
+    </bean>
+
+    <!-- 声明service -->
+    <bean id="buyService" class="com.liruo.service.Impl.BuyGoodsServiceImpl">
+        <property name="goodsDao" ref="goodsDao"/>
+        <property name="saleDao" ref="saleDao"/>
+    </bean>
+
+<!--    pom.xml添加aspectj依赖 -->
+<!--    <dependency>-->
+<!--        <groupId>org.springframework</groupId>-->
+<!--        <artifactId>spring-aspects</artifactId>-->
+<!--        <version>5.2.5.RELEASE</version>-->
+<!--    </dependency>-->
+
+    <!-- 声明式事务处理：和源代码完全分离的 -->
+    <!-- 1、声明事务管理器对象 -->
+    <bean id="tm" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="myDataSource"/>
+    </bean>
+
+    <!-- 2.声明业务方法和它的事务属性（隔离级别，传播行为，超时时间） -->
+    <!-- id:自定义名称，表示 <tx:advice> 和 </tx:advice> 之间的配置内容的 -->
+    <!-- transaction-manager:事务管理器对象的id -->
+    <tx:advice id="myAdvice" transaction-manager="tm">
+        <!-- tx:attributes：配置事务属性 -->
+        <tx:attributes>
+            <!-- tx:method：给具体的方法配置事务属性，method可以有多个，分别给不同的方法设置属性
+                name:方法名  1.完整的方法名称，不带有包和类
+                             2.方法可以使用通配符 * 表示任意字符
+                propagation:传播行为，枚举值
+                isolation:隔离级别
+                rollback-for：你指定的异常类名，全限定类名。发生异常一定回滚
+             -->
+            <tx:method name="buy" propagation="REQUIRED" isolation="DEFAULT" read-only="false"
+                       rollback-for="java.lang.NullPointerException,com.liruo.exception.NotEnoughException"/>
+            <!-- 使用通配符，指定很多的方法 -->
+            <tx:method name="add*" propagation="REQUIRES_NEW"/>
+            <!-- 指定修改方法 -->
+            <tx:method name="modify*"/>
+            <!-- 删除方法 -->
+            <tx:method name="remove*"/>
+            <!-- 查询方法 query,search,find -->
+            <tx:method name="*" propagation="SUPPORTS" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!-- 配置aop -->
+    <aop:config>
+        <!-- 配置切入点表达式：指定哪些包中类，要使用事务
+             id：切入点表达式名称，唯一值
+             expression：切入点表达式，指定哪些类要使用事务，aspectj会创建代理对象
+         -->
+        <aop:pointcut id="servicePt" expression="execution(* *..service..*.*(..))"/>
+        <!-- 配置增强器：关联advice和pointcut
+             advice-ref:通知引用，tx:advice
+             pointcut-ref:切入点表达式的id
+         -->
+        <aop:advisor advice-ref="myAdvice" pointcut-ref="servicePt"/>
+    </aop:config>
+</beans>
+
+
+web.xml
+中央调度器
+    <servlet>
+        <servlet-name>springmvc</servlet-name>
+<!-- 操作1：配置前置控制器 -->
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+<!-- 操作2：指定自定义文件的位置 -->
+            <param-value>classpath:springmvc.xml</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>springmvc</servlet-name>
+        <!--
+            使用框架时，url-pattern可以使用两种值
+            1、使用扩展名方式，语法： *.xxxx，xxxx是自定义的扩展名，常用方式 *.do，*.action等
+            2、使用斜杠 "/"
+         -->
+<!-- 操作3：扩展名为.do的请求都交给springmvc处理 -->
+        <url-pattern>*.do</url-pattern>
+    </servlet-mapping>
+
+
+//解决页面中文乱码问题
+import javax.servlet.*;
+import javax.servlet.annotation.WebFilter;
+import java.io.IOException;
+@WebFilter(urlPatterns = "*")
+public class CharaterEncoding implements Filter {
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+
+    }
+    @Override
+    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+        servletRequest.setCharacterEncoding("UTF-8");
+        servletResponse.setCharacterEncoding("UTF-8");
+        //若仍是乱码则使用
+        //servletResponse.setContentType("text/html;charset=UTF-8");
+        filterChain.doFilter(servletRequest,servletResponse);
+    }
+    @Override
+    public void destroy() {
+
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
